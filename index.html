@@ -1418,7 +1418,7 @@ async function loadFromSheets() {
   preview.style.display = 'none';
 
   try {
-    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEETS_CSV_URL);
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEETS_CSV_URL + '&t=' + Date.now());
     const res = await fetch(proxyUrl);
     if (!res.ok) throw new Error('network');
     const text = await res.text();
