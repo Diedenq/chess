@@ -1,3 +1,246 @@
+у меня есть готовый сайт с регистрацией, и есть сайт для проведения турнира для шахмат. Я хочу сделать так, чтобы подгружался список именно ИЗ ДИСЦИПЛИНЫ ШАХМАТ с таблицы. Короче если участники выбран в шахматах, на сайте с турниром шахмат грузился именно из этой дисциплины. Прикрепил и сайт регистрации и сайт с шахматами. Скажешь что мне нужно поменять в таблица/скриптах/сайтах/ссылках?
+16:45
+Viewed 7 files
+
+Теперь у меня есть полная картина. Вот чёткий план изменений:
+Анализ проблемы
+
+Сайт регистрации сохраняет данные в Google Sheets. Строка участника выглядит так: [Имя, Школа, Дисциплина, Время] — например: ["Алибек", "Школа №1", "Шахмат", "07.02.2026"]
+
+Шахматный сайт загружает CSV из таблицы, но читает колонки r[0] (имя) и r[1] (фамилия) — это не совпадает со структурой твоей таблицы.
+Что нужно изменить
+1. В Google Sheets — добавить отдельный лист для шахмат
+
+Сейчас у тебя, скорее всего, один лист со всеми участниками. Нужно добавить второй лист (например Шахмат), который автоматически фильтрует строки из первого листа, где дисциплина = "Шахмат".
+
+В ячейку A1 нового листа Шахмат вставь эту формулу:
+
+=FILTER('Sheet1'!A:A, 'Sheet1'!C:C="Шахмат")
+
+(где Sheet1 — название твоего основного листа, A:A — имена, C:C — дисциплина)
+2. В шахматном сайте — поменять SHEETS_CSV_URL и логику парсинга
+
+Найди строку ~1407:
+javascript
+
+const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv';
+
+Измени на URL нового листа "Шахмат":
+javascript
+
+const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/ТВОЙ_ID/pub?gid=НОМЕР_ЛИСТА_ШАХМАТ&single=true&output=csv';
+
+gid нового листа видно в URL когда ты открываешь его в браузере.
+3. Исправить парсинг имён в шахматном сайте
+
+Сейчас код читает два столбца — имя и фамилию (r[0] и r[1]). Но у тебя в таблице только одна колонка с именем (полное имя сразу).
+
+Найди строки ~1444–1449 в шахматном сайте:
+javascript
+
+const names = dataRows.map(r => {
+  const first = (r[0] || '').trim();
+  const last  = (r[1] || '').trim();
+  return [first, last].filter(Boolean).join(' ');
+}).filter(Boolean);
+
+Замени на:
+javascript
+
+const names = dataRows.map(r => {
+  return (r[0] || '').trim();
+}).filter(Boolean);
+
+4. Опубликовать новый лист как CSV
+
+В Google Sheets: Файл → Поделиться → Опубликовать в Интернете → выбрать лист Шахмат → формат CSV → нажать Опубликовать → скопировать ссылку в SHEETS_CSV_URL.
+Итого — 4 шага:
+#	Где	Что
+1	Google Sheets	Создать лист Шахмат с формулой FILTER
+2	Google Sheets	Опубликовать этот лист как CSV и скопировать URL
+3	chess-tournament.html строка ~1407	Вставить новый URL
+4	chess-tournament.html строки ~1444-1449	Исправить парсинг имён (убрать r[1])
+
+Хочешь — пришли ID своей таблицы, я сгенерирую готовый URL и обновлённый файл chess-tournament.html сразу.
+
+так, давай по порядку в таблице сделал новый лист но формула выглядит как ошибка
+16:53
+
+Вижу проблему! У тебя формула ссылается на 'Sheet1' но твой основной лист называется base (видно внизу на скриншоте).
+
+Исправь формулу на:
+
+=FILTER('base'!A:A, 'base'!C:C="Шахмат")
+
+Но подожди — это вернёт только имена (колонка A). Для шахматного турнира лучше взять сразу всю строку. Проверь сначала — как называются колонки в листе base? Скорее всего так:
+A	B	C	D
+Имя	Школа	Дисциплина	Время
+
+Если так, то правильная формула:
+
+=FILTER('base'!A:A, 'base'!C:C="Шахмат")
+
+Но важный момент — проверь точное написание слова в колонке C. Возможно там написано "Шахмат" с заглавной, или "шахмат", или на казахском "Шахматы".
+
+Открой лист base, найди любого участника с шахматами и скопируй точное написание дисциплины — оно должно один в один совпадать с тем, что в формуле в кавычках.
+16:54
+
+Вижу проблему! Синтаксическая ошибка из-за запятой в формуле — Google Sheets в некоторых регионах использует точку с запятой как разделитель.
+
+Попробуй эту формулу:
+
+=FILTER('base'!A:A; 'base'!C:C="Шахмат")
+
+Заменил запятые на ; — это стандарт для русскоязычного Google Sheets.
+
+Также вижу на скриншоте листа base — данные есть, дисциплина написана Шахмат ✅ — написание совпадает, так что формула должна сработать.
+
+отлично, второй шаг что мне сделать?
+16:55
+
+Теперь нужно опубликовать лист "Шахмат" как CSV.
+Шаг 2 — Получить CSV ссылку
+
+    В Google Sheets: Файл → Поделиться → Опубликовать в Интернете
+    В первом выпадающем выбери "Шахмат" (не "Весь документ")
+    Во втором выпадающем выбери "Значения, разделённые запятыми (.csv)"
+    Нажми "Опубликовать" → подтверди
+    Скопируй появившуюся ссылку — она будет выглядеть примерно так:
+
+https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=XXXXXXXX&single=true&output=csv
+
+Скопируй эту ссылку и пришли сюда — я сразу подставлю её в шахматный сайт и исправлю парсинг имён, отдам готовый файл.
+
+https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv
+16:56
+
+Отлично! Теперь обновляю шахматный сайт — меняю URL и исправляю парсинг имён.
+Ran 4 commands, edited 2 files, viewed a file
+
+Готово! Скачай обновлённый файл. Что изменено:
+
+    URL — теперь ссылается на лист Шахмат (gid=481486323)
+    Парсинг имён — исправлен под твою структуру: берёт r[0] (полное имя) вместо r[0] + r[1]
+
+Теперь когда нажимаешь "↓ Загрузить из таблицы" на шахматном сайте — загрузятся только участники с дисциплиной "Шахмат".
+Chess tournament
+Code · HTML 
+
+а, то есть мне не нужно больше ничего делать? оно готово?
+16:58
+
+Почти! Осталось одно маленькое действие:
+
+Замени старый файл chess-tournament.html на новый — просто скачай файл который я дал и используй его вместо старого.
+
+Всё остальное уже сделано:
+
+    ✅ Лист Шахмат в таблице создан
+    ✅ Формула FILTER настроена
+    ✅ CSV опубликован
+    ✅ Код сайта обновлён
+
+После замены файла — открываешь шахматный сайт, нажимаешь "↓ Загрузить из таблицы" и должны появиться только шахматисты.
+
+хм, он берёт данные с очень старой месячной давности таблицы, где было 67 человек, явно что-то н ето
+17:01
+
+Это потому что старый gid=0 в коде указывал на основной лист base со всеми 67 участниками, а не на лист Шахмат.
+
+Давай проверим — скинь мне ссылку которую ты получил при публикации листа Шахмат, чтобы я убедился что gid правильный. Либо сделай так:
+
+    Открой Google Sheets
+    Кликни на вкладку "Шахмат" внизу
+    Посмотри на URL в браузере — там будет что-то вроде:
+
+...spreadsheets/d/1kwdeLj.../edit#gid=481486323
+
+    Скопируй число после #gid= и пришли сюда
+
+Также проверь — когда ты открываешь вот эту ссылку прямо в браузере, что там показывается?
+
+https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv
+
+Должны быть только 2-3 шахматиста которых ты добавил для теста.
+
+481486323, отображается всё правильно
+17:02
+
+Тогда скорее всего проблема в кэше браузера — сайт загружает старую версию файла.
+
+Попробуй:
+
+    Жёстко обнови страницу — Ctrl + Shift + R (Windows) или Cmd + Shift + R (Mac)
+    Или открой в режиме инкогнито — Ctrl + Shift + N
+
+Если всё равно показывает 67 человек — значит ты открываешь старый файл chess-tournament.html, а не тот новый который я дал. Убедись что заменил файл на скачанный.
+
+так, теперь на сайте вроде загрузило участника, но в таблице их двое, а грузятся они походу со 2 ячейки - пример упустился
+17:03
+
+Вижу проблему! В листе Шахмат первая строка — это "Аты, тегі" (заголовок), поэтому код делает rows.slice(1) — пропускает первую строку считая её заголовком.
+
+Но у тебя в листе Шахмат заголовка нет — сразу идут данные. Формула FILTER не копирует заголовок, только данные.
+
+Два варианта решения:
+
+Вариант 1 — проще: Добавь заголовок в лист Шахмат вручную.
+
+В ячейку A1 листа Шахмат вставь просто:
+
+Аты, тегі
+
+Тогда строка 1 = заголовок, строка 2+ = участники — всё совпадёт.
+
+Вариант 2 — я меняю код с slice(1) на slice(0).
+
+Рекомендую Вариант 1 — быстрее и не нужно менять файл. Просто вставь заголовок в A1, и формулу FILTER сдвинь на A2.
+
+поменял в таблице, проблема в том что на сайте отображаются опять старые данные, тот же пример с 123 просто грузится
+17:06
+
+Это кэш corsproxy.io — он кэширует CSV на какое-то время и отдаёт старые данные.
+
+Давай сменим прокси на другой. Скинь мне файл chess-tournament.html ещё раз (тот новый который я дал) — я поменяю прокси и верну обновлённый файл.
+17:06
+Ran 2 commands, read a file
+
+Готово! Поменял прокси с corsproxy.io на allorigins.win + добавил Date.now() к запросу чтобы кэш никогда не срабатывал. Скачай и замени файл.
+Chess tournament
+Code · HTML 
+
+Не удалось загрузить. Проверьте доступ к таблице. - это уже загруженный сайт на гитхабе
+17:12
+
+Давай проверим что возвращает allorigins — возможно он тоже не работает. Попробуем другой прокси.
+Ran 2 commands
+
+Подожди — прежде чем менять прокси, давай сначала проверим доступ к таблице. Открой эту ссылку прямо в браузере:
+
+https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv
+
+Что видишь — скачивается CSV файл или ошибка? Это покажет нам где именно проблема — в таблице или в прокси.
+
+скачался файл
+17:14
+
+Значит таблица доступна, проблема в прокси. Давай попробуем сразу несколько прокси с fallback — если один не работает, пробует следующий.
+Ran 4 commands, read a file
+
+Готово! Теперь сайт пробует 3 прокси по очереди — если один не работает, автоматически берёт следующий:
+
+    corsproxy.io
+    allorigins.win
+    thingproxy.freeboard.io
+
+Скачай, залей на GitHub и проверь. Если снова ошибка — открой консоль браузера (F12 → Console) и пришли что там написано.
+Chess tournament
+Code · HTML 
+Want to be notified when Claude responds?
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+Chess tournament · HTML
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -44,7 +287,7 @@
     pointer-events: none;
     z-index: 0;
   }
-
+ 
   /* === HEADER === */
   header {
     position: relative;
@@ -85,7 +328,7 @@
     display: flex;
     gap: 10px;
   }
-
+ 
   /* === TABS === */
   .tabs {
     position: relative;
@@ -113,7 +356,7 @@
     color: var(--gold2);
     border-bottom-color: var(--gold);
   }
-
+ 
   /* === MAIN LAYOUT === */
   main {
     position: relative;
@@ -124,7 +367,7 @@
   }
   .page { display: none; }
   .page.active { display: block; }
-
+ 
   /* === BUTTONS === */
   .btn {
     display: inline-flex;
@@ -153,7 +396,7 @@
   .btn-sm { padding: 5px 10px; font-size: 10px; }
   .btn-danger { border-color: var(--red); color: var(--red); }
   .btn-danger:hover { background: rgba(192,57,43,0.15); }
-
+ 
   /* === CARDS === */
   .card {
     background: var(--surface);
@@ -175,7 +418,7 @@
     align-items: center;
     gap: 10px;
   }
-
+ 
   /* === SETUP PAGE === */
   .setup-grid {
     display: grid;
@@ -211,7 +454,7 @@
     background-position: right 12px center;
     padding-right: 32px;
   }
-
+ 
   /* Players list */
   .players-list { margin-top: 10px; }
   .player-row {
@@ -241,7 +484,7 @@
   }
   .player-name-input:focus { border-bottom-color: var(--gold); }
   .player-name-input::placeholder { color: var(--muted); }
-
+ 
   /* === GROUP STAGE PAGE === */
   .groups-grid {
     display: grid;
@@ -277,7 +520,7 @@
     border-radius: 2px;
     border: 1px solid rgba(201,168,76,0.3);
   }
-
+ 
   /* Standings table */
   .standings {
     padding: 0;
@@ -306,7 +549,7 @@
   .pos-1 { color: var(--gold2); font-weight: 600; }
   .pts { color: var(--gold2); font-weight: 600; text-align: center; }
   .stat { color: var(--muted2); text-align: center; }
-
+ 
   /* Matches */
   .matches-section {
     padding: 12px 16px;
@@ -350,7 +593,7 @@
   .result-btn:hover { border-color: var(--gold); color: var(--gold2); }
   .result-btn.active-win { background: rgba(68,170,102,0.2); border-color: #4a9; color: #4a9; }
   .result-btn.active-draw { background: rgba(136,153,170,0.2); border-color: #8899aa; color: #8899aa; }
-
+ 
   /* === PLAYOFF PAGE === */
   .bracket-container {
     overflow-x: auto;
@@ -425,7 +668,7 @@
     width: 0;
     position: relative;
   }
-
+ 
   /* === PRINT === */
   @media print {
     body { background: white; color: black; }
@@ -437,7 +680,7 @@
     main { padding: 0; max-width: none; }
     .page { display: block !important; }
   }
-
+ 
   /* === MISC === */
   .empty-state {
     text-align: center;
@@ -448,7 +691,7 @@
   }
   .empty-state .icon { font-size: 40px; margin-bottom: 16px; }
   .empty-state strong { display: block; color: var(--muted2); margin-bottom: 8px; font-size: 14px; }
-
+ 
   .badge {
     display: inline-block;
     padding: 2px 8px;
@@ -461,7 +704,7 @@
   .badge-gold { background: var(--gold-dim); color: var(--gold2); border: 1px solid rgba(201,168,76,0.3); }
   .badge-green { background: rgba(68,170,102,0.15); color: #4a9; border: 1px solid rgba(68,170,102,0.3); }
   .badge-gray { background: rgba(100,100,100,0.15); color: var(--muted2); border: 1px solid var(--border2); }
-
+ 
   .section-header {
     display: flex;
     align-items: center;
@@ -480,13 +723,13 @@
     letter-spacing: 0.1em;
     margin-top: 4px;
   }
-
+ 
   .divider {
     height: 1px;
     background: var(--border);
     margin: 24px 0;
   }
-
+ 
   .info-box {
     background: var(--gold-dim);
     border: 1px solid rgba(201,168,76,0.3);
@@ -497,17 +740,17 @@
     margin-bottom: 16px;
     line-height: 1.6;
   }
-
+ 
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
+ 
   .tiebreak-note {
     font-size: 10px;
     color: var(--muted);
     margin-top: 4px;
     font-style: italic;
   }
-
+ 
   /* Modal */
   .modal-overlay {
     display: none;
@@ -535,7 +778,7 @@
     margin-bottom: 16px;
   }
   .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
-
+ 
   /* Notification */
   .notification {
     position: fixed;
@@ -554,7 +797,7 @@
     box-shadow: var(--shadow);
   }
   .notification.show { transform: translateY(0); opacity: 1; }
-
+ 
   .progress-bar {
     height: 3px;
     background: var(--border);
@@ -568,7 +811,7 @@
     border-radius: 2px;
     transition: width 0.5s ease;
   }
-
+ 
   /* Champion */
   .champion-card {
     background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
@@ -581,7 +824,7 @@
   .champion-icon { font-size: 48px; margin-bottom: 12px; }
   .champion-label { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
   .champion-name { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--gold2); }
-
+ 
   /* Results matrix */
   .matrix-table {
     width: 100%;
@@ -600,7 +843,7 @@
   .cell-draw { color: var(--draw); }
   .cell-loss { color: var(--loss); }
   .cell-self { background: var(--surface3); color: var(--muted); }
-
+ 
   /* Playoff status */
   .playoff-status {
     display: flex;
@@ -622,7 +865,7 @@
 </style>
 </head>
 <body>
-
+ 
 <header>
   <div class="logo">
     <div class="logo-icon">♟</div>
@@ -637,14 +880,14 @@
     <button class="btn btn-danger btn-sm" onclick="resetTournament()">✕ Сброс</button>
   </div>
 </header>
-
+ 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('setup')" id="tab-setup">⚙ Настройка</div>
   <div class="tab" onclick="switchTab('groups')" id="tab-groups">◈ Групповая стадия</div>
   <div class="tab" onclick="switchTab('playoff')" id="tab-playoff">⬡ Плей-офф</div>
   <div class="tab" onclick="switchTab('results')" id="tab-results">★ Итоги</div>
 </div>
-
+ 
 <main>
   <!-- SETUP PAGE -->
   <div class="page active" id="page-setup">
@@ -654,7 +897,7 @@
         <div class="section-sub">Введите параметры и список участников</div>
       </div>
     </div>
-
+ 
     <div class="setup-grid">
       <div>
         <div class="card">
@@ -685,11 +928,11 @@
           </div>
         </div>
       </div>
-
+ 
       <div>
         <div class="card">
           <div class="card-title">♟ Участники <span id="player-count-badge" class="badge badge-gray" style="margin-left:auto">16 игроков</span></div>
-
+ 
           <!-- Google Sheets import block -->
           <div id="sheets-import-block" style="margin-bottom:14px; padding:12px 14px; background:var(--surface2); border:1px solid var(--border2); border-radius:3px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -699,7 +942,7 @@
             <div id="sheets-status" style="font-size:10px; color:var(--muted); min-height:14px;"></div>
             <div id="sheets-preview" style="margin-top:8px; max-height:140px; overflow-y:auto; display:none;"></div>
           </div>
-
+ 
           <div id="players-list" class="players-list"></div>
           <div style="margin-top:10px; color:var(--muted); font-size:10px; letter-spacing:0.08em">
             4 игрока × <span id="groups-count-text">4</span> группы = <span id="total-players-text">16</span> участников
@@ -708,7 +951,7 @@
       </div>
     </div>
   </div>
-
+ 
   <!-- GROUPS PAGE -->
   <div class="page" id="page-groups">
     <div class="section-header">
@@ -726,7 +969,7 @@
     </div>
     <div class="groups-grid" id="groups-container"></div>
   </div>
-
+ 
   <!-- PLAYOFF PAGE -->
   <div class="page" id="page-playoff">
     <div class="section-header">
@@ -742,7 +985,7 @@
     </div>
     <div id="third-place-section"></div>
   </div>
-
+ 
   <!-- RESULTS PAGE -->
   <div class="page" id="page-results">
     <div class="section-header">
@@ -755,7 +998,7 @@
     <div id="results-content"></div>
   </div>
 </main>
-
+ 
 <!-- Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -764,10 +1007,10 @@
     <div class="modal-actions" id="modal-actions"></div>
   </div>
 </div>
-
+ 
 <!-- Notification -->
 <div class="notification" id="notification"></div>
-
+ 
 <script>
 // ===== STATE =====
 let T = {
@@ -780,23 +1023,23 @@ let T = {
   thirdPlace: null,
   started: false
 };
-
+ 
 // ===== INIT =====
 function init() {
   updatePlayerInputs();
 }
-
+ 
 function updatePlayerInputs() {
   const n = parseInt(document.getElementById('numGroups').value) || 4;
   const total = n * 4;
   document.getElementById('groups-count-text').textContent = n;
   document.getElementById('total-players-text').textContent = total;
   document.getElementById('player-count-badge').textContent = total + ' игроков';
-
+ 
   const container = document.getElementById('players-list');
   const existing = [...container.querySelectorAll('.player-name-input')].map(i => i.value);
   container.innerHTML = '';
-
+ 
   for (let i = 0; i < total; i++) {
     const row = document.createElement('div');
     row.className = 'player-row';
@@ -808,19 +1051,19 @@ function updatePlayerInputs() {
     container.appendChild(row);
   }
 }
-
+ 
 // ===== TOURNAMENT START =====
 function startTournament() {
   const n = parseInt(document.getElementById('numGroups').value) || 4;
   const nameEl = document.getElementById('tourneyName');
-
+ 
   // Collect players
   const players = [];
   for (let i = 0; i < n * 4; i++) {
     const inp = document.getElementById('player-' + i);
     players.push({ id: i, name: inp?.value.trim() || `Игрок ${i+1}`, group: Math.floor(i/4) });
   }
-
+ 
   // Build groups
   const groups = [];
   for (let g = 0; g < n; g++) {
@@ -833,7 +1076,7 @@ function startTournament() {
     }
     groups.push({ id: g, players: gPlayers, matches });
   }
-
+ 
   T = {
     name: nameEl.value || 'Турнир',
     numGroups: n,
@@ -844,29 +1087,29 @@ function startTournament() {
     thirdPlace: null,
     started: true
   };
-
+ 
   renderGroups();
   switchTab('groups');
   notify('Турнир начат! Введите результаты партий.');
 }
-
+ 
 // ===== GROUPS RENDERING =====
 function renderGroups() {
   document.getElementById('groups-subtitle').textContent =
     `${T.numGroups} групп · Победитель каждой группы выходит в плей-офф`;
-
+ 
   const container = document.getElementById('groups-container');
   container.innerHTML = '';
-
+ 
   T.groups.forEach((group, gi) => {
     const standings = getGroupStandings(group);
     const leader = standings[0];
     const allDone = group.matches.every(m => m.result !== null);
     const done = group.matches.filter(m => m.result !== null).length;
-
+ 
     const card = document.createElement('div');
     card.className = 'group-card';
-
+ 
     // Header
     card.innerHTML = `
       <div class="group-header">
@@ -874,7 +1117,7 @@ function renderGroups() {
         <span class="group-leader-badge">${done}/${group.matches.length} партий</span>
       </div>
     `;
-
+ 
     // Standings
     const standingsDiv = document.createElement('div');
     standingsDiv.className = 'standings';
@@ -897,13 +1140,13 @@ function renderGroups() {
       standingsDiv.appendChild(row);
     });
     card.appendChild(standingsDiv);
-
+ 
     // Matrix
     const matrixDiv = document.createElement('div');
     matrixDiv.style.cssText = 'padding:10px 16px; border-top:1px solid var(--border); background:var(--surface2)';
     matrixDiv.innerHTML = buildMatrix(group, standings);
     card.appendChild(matrixDiv);
-
+ 
     // Matches
     const matchDiv = document.createElement('div');
     matchDiv.className = 'matches-section';
@@ -926,20 +1169,20 @@ function renderGroups() {
       matchDiv.appendChild(row);
     });
     card.appendChild(matchDiv);
-
+ 
     container.appendChild(card);
   });
-
+ 
   updateGroupProgress();
 }
-
+ 
 function buildMatrix(group, standings) {
   const ids = standings.map(s => s.id);
   const players = standings.map(s => T.players[s.id]);
   let html = `<table class="matrix-table"><tr><th></th>`;
   players.forEach((p,i) => { html += `<th title="${p.name}">${String.fromCharCode(65+i)}</th>`; });
   html += `<th>Б</th></tr>`;
-
+ 
   ids.forEach((id, ri) => {
     const p = T.players[id];
     let pts = 0;
@@ -959,11 +1202,11 @@ function buildMatrix(group, standings) {
   html += '</table>';
   return html;
 }
-
+ 
 function getGroupStandings(group) {
   const stats = {};
   group.players.forEach(id => { stats[id] = { id, points:0, wins:0, draws:0, losses:0, buchholz:0 }; });
-
+ 
   group.matches.forEach(m => {
     if (m.result === null) return;
     if (m.result === 'p1') {
@@ -977,7 +1220,7 @@ function getGroupStandings(group) {
       stats[m.p2].points += 1; stats[m.p2].draws++;
     }
   });
-
+ 
   // Buchholz: sum of opponents' points
   group.players.forEach(id => {
     const opponents = group.matches
@@ -986,7 +1229,7 @@ function getGroupStandings(group) {
     stats[id].buchholz = opponents.reduce((s,oid) => s + stats[oid].points, 0);
     stats[id].name = T.players[id].name;
   });
-
+ 
   return Object.values(stats).sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     // Tiebreak: head to head
@@ -999,12 +1242,12 @@ function getGroupStandings(group) {
     return b.buchholz - a.buchholz;
   });
 }
-
+ 
 function setResult(gi, mi, result) {
   T.groups[gi].matches[mi].result = result;
   renderGroups();
 }
-
+ 
 function updateGroupProgress() {
   const total = T.groups.reduce((s,g) => s + g.matches.length, 0);
   const done = T.groups.reduce((s,g) => s + g.matches.filter(m=>m.result!==null).length, 0);
@@ -1012,7 +1255,7 @@ function updateGroupProgress() {
   document.getElementById('group-progress-bar').style.width = pct + '%';
   document.getElementById('group-progress-text').textContent = `${done}/${total} партий (${pct}%)`;
 }
-
+ 
 // ===== PLAYOFF =====
 function advanceToPlayoff() {
   // Check all groups done
@@ -1026,14 +1269,14 @@ function advanceToPlayoff() {
   }
   buildBracket();
 }
-
+ 
 function buildBracket() {
   // Get group winners
   const winners = T.groups.map(g => {
     const standings = getGroupStandings(g);
     return standings[0].id;
   });
-
+ 
   // Build bracket rounds
   T.bracket = [];
   // First round
@@ -1042,7 +1285,7 @@ function buildBracket() {
     firstRound.push({ p1: winners[i], p2: winners[i+1] !== undefined ? winners[i+1] : null, winner: null });
   }
   T.bracket.push(firstRound);
-
+ 
   // Generate remaining rounds based on first round size
   let size = firstRound.length;
   while (size > 1) {
@@ -1053,45 +1296,45 @@ function buildBracket() {
     }
     T.bracket.push(round);
   }
-
+ 
   T.thirdPlace = { p1: null, p2: null, winner: null };
-
+ 
   renderPlayoff();
   switchTab('playoff');
   notify('Плей-офф начат! Нажмите на победителя каждой пары.');
 }
-
+ 
 function renderPlayoff() {
   const container = document.getElementById('bracket-container');
   container.innerHTML = '';
-
+ 
   const roundNames = getRoundNames(T.bracket.length);
-
+ 
   T.bracket.forEach((round, ri) => {
     const roundDiv = document.createElement('div');
     roundDiv.className = 'bracket-round';
     roundDiv.innerHTML = `<div class="round-header">${roundNames[ri]}</div>`;
-
+ 
     const matchesDiv = document.createElement('div');
     matchesDiv.className = 'round-matches';
-
+ 
     round.forEach((match, mi) => {
       const matchEl = document.createElement('div');
       matchEl.className = 'bracket-match';
       matchEl.style.minWidth = '180px';
-
+ 
       const p1Name = match.p1 !== null ? T.players[match.p1].name : '—';
       const p2Name = match.p2 !== null ? T.players[match.p2].name : '—';
-
+ 
       // Bye: if only one player present, auto-advance them
       const isBye = (match.p1 !== null) !== (match.p2 !== null);
       if (isBye && match.winner === null) {
         setTimeout(() => setPlayoffWinner(ri, mi, match.p1 !== null ? 'p1' : 'p2'), 0);
       }
-
+ 
       const p1Clickable = match.p1 !== null && match.p2 !== null;
       const p2Clickable = match.p1 !== null && match.p2 !== null;
-
+ 
       matchEl.innerHTML = `
         <div class="bracket-player ${match.winner===match.p1&&match.p1!==null?'winner':''} ${match.winner!==null&&match.winner!==match.p1&&match.p1!==null?'loser':''}"
           onclick="${p1Clickable ? `setPlayoffWinner(${ri},${mi},'p1')` : ''}" style="${match.p1===null?'opacity:0.35;cursor:default':''}">
@@ -1104,13 +1347,13 @@ function renderPlayoff() {
           ${match.winner===match.p2&&match.p2!==null?'<span class="bracket-player-check">✓</span>':''}
         </div>
       `;
-
+ 
       matchesDiv.appendChild(matchEl);
     });
-
+ 
     roundDiv.appendChild(matchesDiv);
     container.appendChild(roundDiv);
-
+ 
     // Add connector lines between rounds (CSS hack)
     if (ri < T.bracket.length - 1) {
       const connDiv = document.createElement('div');
@@ -1118,7 +1361,7 @@ function renderPlayoff() {
       container.appendChild(connDiv);
     }
   });
-
+ 
   // Third place
   const tpSection = document.getElementById('third-place-section');
   if (T.bracket.length >= 2 && T.thirdPlace) {
@@ -1128,12 +1371,12 @@ function renderPlayoff() {
       if (m.winner === null) return null;
       return m.winner === m.p1 ? m.p2 : m.p1;
     }).filter(l => l !== null);
-
+ 
     if (losers.length >= 2) {
       T.thirdPlace.p1 = losers[0];
       T.thirdPlace.p2 = losers[1];
     }
-
+ 
     if (T.thirdPlace.p1 !== null && T.thirdPlace.p2 !== null) {
       const tp = T.thirdPlace;
       tpSection.innerHTML = `
@@ -1159,7 +1402,7 @@ function renderPlayoff() {
   } else {
     tpSection.innerHTML = '';
   }
-
+ 
   // Champion
   const finalMatch = T.bracket[T.bracket.length - 1]?.[0];
   const champDiv = document.getElementById('champion-display');
@@ -1174,7 +1417,7 @@ function renderPlayoff() {
   } else {
     champDiv.innerHTML = '';
   }
-
+ 
   // Stats
   const doneMatches = T.bracket.flat().filter(m => m.winner !== null).length;
   const totalMatches = T.bracket.flat().filter(m => m.p1 !== null && m.p2 !== null).length;
@@ -1183,17 +1426,17 @@ function renderPlayoff() {
     <div class="status-card"><div class="status-value">${T.bracket.length}</div><div class="status-label">Раундов</div></div>
     <div class="status-card"><div class="status-value">${doneMatches}/${totalMatches}</div><div class="status-label">Матчей сыграно</div></div>
   `;
-
+ 
   renderResults();
 }
-
+ 
 function setPlayoffWinner(ri, mi, side) {
   const match = T.bracket[ri][mi];
   const winnerId = side === 'p1' ? match.p1 : match.p2;
   const loserId = side === 'p1' ? match.p2 : match.p1;
-
+ 
   match.winner = winnerId;
-
+ 
   // Propagate winner to next round
   if (ri + 1 < T.bracket.length) {
     const nextRoundIdx = Math.floor(mi / 2);
@@ -1204,16 +1447,16 @@ function setPlayoffWinner(ri, mi, side) {
     // Clear previous results if changed
     nextMatch.winner = null;
   }
-
+ 
   renderPlayoff();
 }
-
+ 
 function setThirdPlace(side) {
   const tp = T.thirdPlace;
   tp.winner = side === 'p1' ? tp.p1 : tp.p2;
   renderPlayoff();
 }
-
+ 
 function getRoundNames(total) {
   const base = ['Финал', 'Полуфинал', '¼ финала', '⅛ финала', '1/16 финала', '1/32 финала'];
   const names = [];
@@ -1222,26 +1465,26 @@ function getRoundNames(total) {
   }
   return names;
 }
-
+ 
 // ===== RESULTS =====
 function renderResults() {
   document.getElementById('tourney-name-display').textContent = T.name;
-
+ 
   const finalMatch = T.bracket[T.bracket.length - 1]?.[0];
   const champion = finalMatch?.winner !== null && finalMatch?.winner !== undefined ? T.players[finalMatch.winner] : null;
   const runnerUp = finalMatch?.winner !== null && finalMatch?.winner !== undefined
     ? T.players[finalMatch.winner === finalMatch.p1 ? finalMatch.p2 : finalMatch.p1]
     : null;
   const third = T.thirdPlace?.winner !== null && T.thirdPlace?.winner !== undefined ? T.players[T.thirdPlace.winner] : null;
-
+ 
   // Group winners
   const groupWinners = T.groups.map((g, gi) => {
     const standings = getGroupStandings(g);
     return { player: T.players[standings[0].id], group: gi, points: standings[0].points, wins: standings[0].wins, draws: standings[0].draws };
   });
-
+ 
   let html = '';
-
+ 
   // === PRIZES ===
   if (champion) {
     html += `
@@ -1271,7 +1514,7 @@ function renderResults() {
   } else {
     html += `<div class="info-box" style="margin-bottom:28px">Плей-офф ещё не завершён — призовые места будут определены после финала.</div>`;
   }
-
+ 
   // === GROUP WINNERS ===
   html += `
     <div style="font-family:'Playfair Display',serif; font-size:16px; color:var(--gold2); margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px">
@@ -1292,7 +1535,7 @@ function renderResults() {
     `;
   });
   html += `</div>`;
-
+ 
   // === GROUP STANDINGS (collapsed) ===
   html += `
     <div style="font-family:'Playfair Display',serif; font-size:16px; color:var(--gold2); margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border)">
@@ -1331,10 +1574,10 @@ function renderResults() {
     html += `</table></div>`;
   });
   html += `</div>`;
-
+ 
   document.getElementById('results-content').innerHTML = html;
 }
-
+ 
 // ===== UI HELPERS =====
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1343,14 +1586,14 @@ function switchTab(tab) {
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'results') renderResults();
 }
-
+ 
 function notify(msg) {
   const el = document.getElementById('notification');
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3000);
 }
-
+ 
 function showModal(title, body, actions) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').innerHTML = `<p style="color:var(--muted2); font-size:12px; line-height:1.6">${body}</p>`;
@@ -1365,11 +1608,11 @@ function showModal(title, body, actions) {
   });
   document.getElementById('modal-overlay').classList.add('open');
 }
-
+ 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
 }
-
+ 
 function resetTournament() {
   showModal('Сброс турнира', 'Все данные будут удалены. Продолжить?',
     [{ label: 'Сбросить', cls: 'btn-danger', action: () => {
@@ -1381,11 +1624,11 @@ function resetTournament() {
     }},
      { label: 'Отмена', cls: 'btn', action: closeModal }]);
 }
-
+ 
 function printTournament() {
   window.print();
 }
-
+ 
 function exportData() {
   const json = JSON.stringify(T, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -1397,32 +1640,42 @@ function exportData() {
   URL.revokeObjectURL(url);
   notify('Данные экспортированы.');
 }
-
+ 
 // Close modal on overlay click
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
-
+ 
 // ===== GOOGLE SHEETS IMPORT =====
 const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv';
-
+ 
 async function loadFromSheets() {
   const btn = document.getElementById('sheets-load-btn');
   const status = document.getElementById('sheets-status');
   const preview = document.getElementById('sheets-preview');
-
+ 
   btn.disabled = true;
   btn.textContent = 'загрузка...';
   status.style.color = 'var(--muted2)';
   status.textContent = 'Подключение к таблице...';
   preview.style.display = 'none';
-
+ 
   try {
-    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEETS_CSV_URL + '&t=' + Date.now());
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error('network');
-    const text = await res.text();
-
+    const cacheBust = '&t=' + Date.now();
+    const proxies = [
+      'https://corsproxy.io/?' + encodeURIComponent(SHEETS_CSV_URL + cacheBust),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEETS_CSV_URL + cacheBust),
+      'https://thingproxy.freeboard.io/fetch/' + SHEETS_CSV_URL + cacheBust,
+    ];
+    let text = null;
+    for (const proxyUrl of proxies) {
+      try {
+        const r = await fetch(proxyUrl);
+        if (r.ok) { text = await r.text(); break; }
+      } catch(e) { continue; }
+    }
+    if (!text) throw new Error('network');
+ 
     const rows = text.trim().split('\n').map(r => {
       const fields = [];
       let cur = '', inQ = false;
@@ -1434,7 +1687,7 @@ async function loadFromSheets() {
       fields.push(cur.trim());
       return fields;
     });
-
+ 
     // r[0] = Имя (полное), r[1] = Школа, r[2] = Дисциплина
     const dataRows = rows.slice(1).filter(r => r[0] && r[0].trim());
     if (dataRows.length === 0) {
@@ -1442,9 +1695,9 @@ async function loadFromSheets() {
       status.textContent = 'Таблица пуста.';
       return;
     }
-
+ 
     const names = dataRows.map(r => (r[0] || '').trim()).filter(Boolean);
-
+ 
     // Auto-adjust number of groups so slots >= participants
     // Each group holds 4 players, so groups = ceil(names.length / 4)
     const neededGroups = Math.max(2, Math.ceil(names.length / 4));
@@ -1454,24 +1707,24 @@ async function loadFromSheets() {
       groupInput.value = neededGroups;
       updatePlayerInputs(); // re-renders the inputs with new slot count
     }
-
+ 
     preview.style.display = 'block';
     preview.innerHTML = names.map((n, i) =>
       '<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--border);color:var(--white);display:flex;gap:8px;">' +
       '<span style="color:var(--muted);min-width:20px">' + (i+1) + '.</span>' +
       '<span>' + n + '</span></div>'
     ).join('');
-
+ 
     const inputs = document.querySelectorAll('.player-name-input');
     inputs.forEach((inp, i) => { inp.value = names[i] || ''; });
-
+ 
     const totalSlots = neededGroups * 4;
     const free = totalSlots - names.length;
     const groupMsg = neededGroups !== prevGroups ? ' · групп: ' + neededGroups : '';
     status.style.color = 'var(--win)';
     status.textContent = '✓ ' + names.length + ' участников' + groupMsg + ' · ' + free + ' слотов свободно';
     notify('Загружено ' + names.length + ' участников · групп автоматически: ' + neededGroups);
-
+ 
   } catch (e) {
     status.style.color = 'var(--red)';
     status.textContent = '✕ Не удалось загрузить. Проверьте доступ к таблице.';
@@ -1481,8 +1734,10 @@ async function loadFromSheets() {
     btn.textContent = '↓ Загрузить из таблицы';
   }
 }
-
+ 
 init();
 </script>
 </body>
 </html>
+ 
+
