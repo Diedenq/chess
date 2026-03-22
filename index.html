@@ -1404,7 +1404,7 @@ document.getElementById('modal-overlay').addEventListener('click', function(e) {
 });
 
 // ===== GOOGLE SHEETS IMPORT =====
-const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=0&single=true&output=csv';
+const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv';
 
 async function loadFromSheets() {
   const btn = document.getElementById('sheets-load-btn');
@@ -1435,18 +1435,15 @@ async function loadFromSheets() {
       return fields;
     });
 
-    const dataRows = rows.slice(1).filter(r => r[0] || r[1]);
+    // r[0] = Имя (полное), r[1] = Школа, r[2] = Дисциплина
+    const dataRows = rows.slice(1).filter(r => r[0] && r[0].trim());
     if (dataRows.length === 0) {
       status.style.color = 'var(--red)';
       status.textContent = 'Таблица пуста.';
       return;
     }
 
-    const names = dataRows.map(r => {
-      const first = (r[0] || '').trim();
-      const last  = (r[1] || '').trim();
-      return [first, last].filter(Boolean).join(' ');
-    }).filter(Boolean);
+    const names = dataRows.map(r => (r[0] || '').trim()).filter(Boolean);
 
     // Auto-adjust number of groups so slots >= participants
     // Each group holds 4 players, so groups = ceil(names.length / 4)
