@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Шахматный турнир</title>
+<title>Шахматный турнир (С разделением M/Ж)</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -16,6 +16,9 @@
     --gold: #c9a84c;
     --gold2: #e8c97a;
     --gold-dim: rgba(201,168,76,0.15);
+    --female: #a25bc2;
+    --female2: #d896ff;
+    --female-dim: rgba(162,91,194,0.15);
     --white: #f0ead8;
     --muted: #666666;
     --muted2: #888888;
@@ -23,6 +26,8 @@
     --draw: #8899aa;
     --loss: #944;
     --red: #c0392b;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
     --shadow: 0 8px 40px rgba(0,0,0,0.8);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,592 +38,168 @@
     min-height: 100vh;
     overflow-x: hidden;
   }
-  /* Background pattern */
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px),
-      repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px);
-    pointer-events: none;
-    z-index: 0;
+    content: ''; position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px),
+                      repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px);
+    pointer-events: none; z-index: 0;
   }
 
   /* === HEADER === */
-  header {
-    position: relative;
-    z-index: 10;
-    border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(180deg, rgba(201,168,76,0.05) 0%, transparent 100%);
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .logo-icon {
-    font-size: 28px;
-    line-height: 1;
-    filter: drop-shadow(0 0 8px rgba(201,168,76,0.6));
-  }
-  .logo-text {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--gold2);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-  .logo-sub {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-  .header-actions {
-    display: flex;
-    gap: 10px;
-  }
+  header { position: relative; z-index: 10; border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(180deg, rgba(201,168,76,0.05) 0%, transparent 100%); }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon { font-size: 28px; line-height: 1; filter: drop-shadow(0 0 8px rgba(201,168,76,0.6)); }
+  .logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--gold2); letter-spacing: 0.05em; text-transform: uppercase; }
+  .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 2px; }
+  .header-actions { display: flex; gap: 10px; }
 
   /* === TABS === */
-  .tabs {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    padding: 0 32px;
-  }
-  .tab {
-    padding: 14px 20px;
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted2);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .tabs { position: relative; z-index: 10; display: flex; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 32px; }
+  .tab { padding: 14px 20px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
   .tab:hover { color: var(--white); }
-  .tab.active {
-    color: var(--gold2);
-    border-bottom-color: var(--gold);
-  }
+  .tab.active { color: var(--gold2); border-bottom-color: var(--gold); }
+
+  /* === CATEGORY TABS (M/F) === */
+  .cat-tabs { display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+  .cat-tab { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted2); padding: 8px 24px; border-radius: 4px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; transition: all 0.2s; }
+  .cat-tab:hover { border-color: var(--muted); color: var(--white); }
+  .cat-tab.active[data-cat="male"] { background: var(--gold-dim); border-color: var(--gold); color: var(--gold2); }
+  .cat-tab.active[data-cat="female"] { background: var(--female-dim); border-color: var(--female); color: var(--female2); }
 
   /* === MAIN LAYOUT === */
-  main {
-    position: relative;
-    z-index: 10;
-    padding: 32px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+  main { position: relative; z-index: 10; padding: 32px; max-width: 1400px; margin: 0 auto; }
   .page { display: none; }
   .page.active { display: block; }
 
   /* === BUTTONS === */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    border: 1px solid var(--border2);
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface2);
-    color: var(--muted2);
-  }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--border2); border-radius: 3px; cursor: pointer; transition: all 0.2s; background: var(--surface2); color: var(--muted2); }
   .btn:hover { border-color: var(--gold); color: var(--gold2); background: var(--gold-dim); }
-  .btn-gold {
-    background: var(--gold);
-    color: #000;
-    border-color: var(--gold);
-    font-weight: 600;
-  }
+  .btn-gold { background: var(--gold); color: #000; border-color: var(--gold); font-weight: 600; }
   .btn-gold:hover { background: var(--gold2); border-color: var(--gold2); color: #000; }
+  .btn-female { background: var(--female); color: #fff; border-color: var(--female); font-weight: 600; }
+  .btn-female:hover { background: var(--female2); border-color: var(--female2); color: #000; }
   .btn-sm { padding: 5px 10px; font-size: 10px; }
   .btn-danger { border-color: var(--red); color: var(--red); }
   .btn-danger:hover { background: rgba(192,57,43,0.15); }
 
   /* === CARDS === */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 24px;
-    margin-bottom: 20px;
-  }
-  .card-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 14px;
-    color: var(--gold2);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; margin-bottom: 20px; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--gold2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 
   /* === SETUP PAGE === */
-  .setup-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .form-group { margin-bottom: 16px; }
-  .form-label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted2);
-    margin-bottom: 6px;
-  }
-  .form-input {
-    width: 100%;
-    padding: 10px 14px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 3px;
-    color: var(--white);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    transition: border-color 0.2s;
-    outline: none;
-  }
+  .form-label { display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+  .form-input { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 3px; color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; transition: 0.2s; }
   .form-input:focus { border-color: var(--gold); }
-  .form-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 32px;
-  }
+  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
 
-  /* Players list */
-  .players-list { margin-top: 10px; }
-  .player-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .player-num {
-    font-size: 10px;
-    color: var(--muted);
-    width: 24px;
-    text-align: right;
-  }
-  .player-name-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid transparent;
-    color: var(--white);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    padding: 4px 0;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .player-name-input:focus { border-bottom-color: var(--gold); }
-  .player-name-input::placeholder { color: var(--muted); }
+  .player-input-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .player-list { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .player-tag { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 4px; padding: 5px 8px 5px 12px; font-size: 11px; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+  .player-tag[data-gender="male"] { border-left-color: var(--gold); }
+  .player-tag[data-gender="female"] { border-left-color: var(--female); }
+  
+  .gender-btn { background: transparent; border: 1px solid; border-radius: 3px; font-size: 9px; padding: 2px 5px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace; transition: 0.2s; }
+  .gender-m { color: var(--gold); border-color: var(--gold); }
+  .gender-m:hover { background: var(--gold-dim); }
+  .gender-f { color: var(--female); border-color: var(--female); }
+  .gender-f:hover { background: var(--female-dim); }
+  .remove-tag { cursor: pointer; color: var(--muted); font-size: 14px; padding-left: 4px; line-height: 1; }
+  .remove-tag:hover { color: var(--red); }
+  .player-count { font-size: 10px; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.1em; }
+  .player-count span { color: var(--white); font-weight: bold; }
 
-  /* === GROUP STAGE PAGE === */
-  .groups-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 20px;
-  }
-  .group-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .group-header {
-    background: linear-gradient(135deg, rgba(201,168,76,0.2) 0%, rgba(201,168,76,0.05) 100%);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    font-family: 'Playfair Display', serif;
-    font-size: 13px;
-    color: var(--gold2);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .group-leader-badge {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    color: var(--gold);
-    font-family: 'JetBrains Mono', monospace;
-    background: var(--gold-dim);
-    padding: 3px 8px;
-    border-radius: 2px;
-    border: 1px solid rgba(201,168,76,0.3);
-  }
-
-  /* Standings table */
-  .standings {
-    padding: 0;
-  }
-  .standings-row {
-    display: grid;
-    grid-template-columns: 22px 1fr 28px 28px 28px 36px;
-    gap: 4px;
-    align-items: center;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-    transition: background 0.15s;
-  }
+  /* === GROUPS PAGE === */
+  .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+  .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .group-header { background: linear-gradient(135deg, rgba(201,168,76,0.2) 0%, rgba(201,168,76,0.05) 100%); border-bottom: 1px solid var(--border); padding: 12px 16px; font-family: 'Playfair Display', serif; font-size: 13px; color: var(--gold2); letter-spacing: 0.08em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+  .group-header.female { background: linear-gradient(135deg, var(--female-dim) 0%, transparent 100%); color: var(--female2); }
+  
+  .standings-row { display: grid; grid-template-columns: 22px 1fr 28px 28px 28px 36px; gap: 4px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 12px; }
   .standings-row:hover { background: var(--surface2); }
   .standings-row.leader { background: rgba(201,168,76,0.06); }
-  .standings-row.header {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: var(--surface2);
-    padding: 6px 16px;
-  }
+  .standings-row.header { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); background: var(--surface2); }
   .pos { color: var(--muted); font-size: 11px; }
   .pos-1 { color: var(--gold2); font-weight: 600; }
   .pts { color: var(--gold2); font-weight: 600; text-align: center; }
   .stat { color: var(--muted2); text-align: center; }
 
-  /* Matches */
-  .matches-section {
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    background: var(--surface2);
-  }
-  .matches-title {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-  .match-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr auto;
-    gap: 8px;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 11px;
-  }
+  .matches-section { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface2); }
+  .match-row { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
   .match-row:last-child { border-bottom: none; }
   .match-player { color: var(--white); }
   .match-player.right { text-align: right; }
-  .match-vs { color: var(--muted); font-size: 9px; letter-spacing: 0.1em; }
   .result-btns { display: flex; gap: 4px; }
-  .result-btn {
-    padding: 3px 8px;
-    font-size: 9px;
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.05em;
-    border: 1px solid var(--border2);
-    border-radius: 2px;
-    cursor: pointer;
-    background: var(--surface);
-    color: var(--muted2);
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
+  .result-btn { padding: 3px 8px; font-size: 9px; border: 1px solid var(--border2); border-radius: 2px; cursor: pointer; background: var(--surface); color: var(--muted2); transition: 0.15s; }
   .result-btn:hover { border-color: var(--gold); color: var(--gold2); }
   .result-btn.active-win { background: rgba(68,170,102,0.2); border-color: #4a9; color: #4a9; }
   .result-btn.active-draw { background: rgba(136,153,170,0.2); border-color: #8899aa; color: #8899aa; }
 
   /* === PLAYOFF PAGE === */
-  .bracket-container {
-    overflow-x: auto;
-    padding-bottom: 20px;
-  }
-  .bracket {
-    display: flex;
-    gap: 0;
-    min-width: max-content;
-    align-items: stretch;
-  }
-  .bracket-round {
-    display: flex;
-    flex-direction: column;
-    min-width: 200px;
-  }
-  .round-header {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted2);
-    text-align: center;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-  }
-  .round-matches {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    flex: 1;
-    padding: 16px 0;
-  }
-  .bracket-match {
-    position: relative;
-    margin: 8px 16px;
-    border: 1px solid var(--border2);
-    border-radius: 3px;
-    overflow: hidden;
-    background: var(--surface);
-  }
-  .bracket-match::after {
-    content: '';
-    position: absolute;
-    right: -17px;
-    top: 50%;
-    width: 17px;
-    height: 1px;
-    background: var(--border2);
-  }
-  .bracket-player {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    font-size: 12px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
+  .bracket-container { overflow-x: auto; padding-bottom: 20px; }
+  .bracket { display: flex; gap: 0; min-width: max-content; align-items: stretch; }
+  .bracket-round { display: flex; flex-direction: column; min-width: 200px; }
+  .round-header { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted2); text-align: center; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .round-matches { display: flex; flex-direction: column; justify-content: space-around; flex: 1; padding: 16px 0; }
+  .bracket-match { position: relative; margin: 8px 16px; border: 1px solid var(--border2); border-radius: 3px; background: var(--surface); }
+  .bracket-match::after { content: ''; position: absolute; right: -17px; top: 50%; width: 17px; height: 1px; background: var(--border2); }
+  .bracket-match.no-after::after { display: none; } 
+  .bracket-player { display: flex; align-items: center; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.15s; }
   .bracket-player:last-child { border-bottom: none; }
   .bracket-player:hover { background: var(--surface2); }
   .bracket-player.winner { background: var(--gold-dim); color: var(--gold2); }
-  .bracket-player.loser { color: var(--muted); }
-  .bracket-player-name { flex: 1; }
-  .bracket-player-check { font-size: 10px; color: var(--gold); margin-left: 8px; }
-  .bracket-connector {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    padding: 16px 0;
-    width: 0;
-    position: relative;
-  }
+  .bracket-player.loser { color: var(--muted); text-decoration: line-through; }
+  
+  @keyframes fadeInChamp { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* === PRINT === */
-  @media print {
-    body { background: white; color: black; }
-    body::before { display: none; }
-    header, .tabs, .header-actions { display: none; }
-    .card { border: 1px solid #ccc; break-inside: avoid; }
-    .btn { display: none; }
-    .group-header { background: #f5f5f5; }
-    main { padding: 0; max-width: none; }
-    .page { display: block !important; }
-  }
+  /* === PODIUM & RESULTS PAGE === */
+  .podium-wrapper { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 40px; border-bottom: 1px solid var(--border); padding: 0 20px; }
+  .podium-item { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 160px; }
+  
+  /* ИЗМЕНЕНО: Отступ снизу увеличен, z-index добавлен, чтобы текст не перекрывался медалями */
+  .podium-name { font-family: 'Playfair Display', serif; font-size: 16px; text-align: center; margin-bottom: 26px; word-break: break-word; color: var(--white); position: relative; z-index: 5; }
+  
+  .podium-base { width: 100%; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; border-radius: 4px 4px 0 0; border: 1px solid var(--border); border-bottom: none; position: relative; box-shadow: inset 0 20px 30px -10px rgba(0,0,0,0.5); }
+  .podium-medal { font-size: 32px; margin-top: -24px; margin-bottom: 10px; background: var(--bg); border-radius: 50%; padding: 4px; box-shadow: 0 6px 12px rgba(0,0,0,0.8); }
+  .podium-rank { font-family: 'Playfair Display', serif; font-size: 40px; line-height: 1; opacity: 0.8; }
+
+  .podium-1 .podium-base { height: 180px; background: linear-gradient(to bottom, rgba(201,168,76,0.15), var(--surface)); border-color: rgba(201,168,76,0.4); }
+  .podium-1 .podium-rank { color: var(--gold); text-shadow: 0 0 15px rgba(201,168,76,0.4); }
+  .podium-1 .podium-name { color: var(--gold2); font-size: 20px; font-weight: bold; }
+
+  .podium-2 .podium-base { height: 130px; background: linear-gradient(to bottom, rgba(192,192,192,0.12), var(--surface)); border-color: rgba(192,192,192,0.4); }
+  .podium-2 .podium-rank { color: var(--silver); text-shadow: 0 0 15px rgba(192,192,192,0.3); }
+
+  .podium-3 .podium-base { height: 100px; background: linear-gradient(to bottom, rgba(205,127,50,0.12), var(--surface)); border-color: rgba(205,127,50,0.4); }
+  .podium-3 .podium-rank { color: var(--bronze); text-shadow: 0 0 15px rgba(205,127,50,0.3); }
+
+  .podium-2 { order: 1; } .podium-1 { order: 2; z-index: 2; margin: 0 10px; } .podium-3 { order: 3; }
+
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; }
+  .result-place { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--muted); min-width: 30px; line-height: 1; }
+  .result-details { display: flex; flex-direction: column; }
+  .result-name { font-size: 12px; color: var(--white); margin-bottom: 4px; }
+  .result-stats { font-size: 9px; color: var(--muted2); }
 
   /* === MISC === */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-    font-size: 12px;
-    letter-spacing: 0.1em;
-  }
-  .empty-state .icon { font-size: 40px; margin-bottom: 16px; }
-  .empty-state strong { display: block; color: var(--muted2); margin-bottom: 8px; font-size: 14px; }
-
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    border-radius: 2px;
-    font-weight: 600;
-  }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--gold2); letter-spacing: 0.05em; }
+  .section-sub { font-size: 11px; color: var(--muted2); letter-spacing: 0.1em; margin-top: 4px; }
+  .info-box { background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.3); border-radius: 3px; padding: 12px 16px; font-size: 11px; color: var(--gold2); margin-bottom: 16px; line-height: 1.6; }
+  .badge { display: inline-block; padding: 2px 8px; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px; font-weight: 600; }
   .badge-gold { background: var(--gold-dim); color: var(--gold2); border: 1px solid rgba(201,168,76,0.3); }
-  .badge-green { background: rgba(68,170,102,0.15); color: #4a9; border: 1px solid rgba(68,170,102,0.3); }
-  .badge-gray { background: rgba(100,100,100,0.15); color: var(--muted2); border: 1px solid var(--border2); }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  .section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    color: var(--gold2);
-    letter-spacing: 0.05em;
-  }
-  .section-sub {
-    font-size: 11px;
-    color: var(--muted2);
-    letter-spacing: 0.1em;
-    margin-top: 4px;
-  }
-
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 24px 0;
-  }
-
-  .info-box {
-    background: var(--gold-dim);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 3px;
-    padding: 12px 16px;
-    font-size: 11px;
-    color: var(--gold2);
-    margin-bottom: 16px;
-    line-height: 1.6;
-  }
-
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  .tiebreak-note {
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 4px;
-    font-style: italic;
-  }
-
-  /* Modal */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 4px;
-    padding: 28px;
-    min-width: 340px;
-    max-width: 500px;
-    box-shadow: var(--shadow);
-  }
-  .modal-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 18px;
-    color: var(--gold2);
-    margin-bottom: 16px;
-  }
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
-
-  /* Notification */
-  .notification {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--surface);
-    border: 1px solid var(--gold);
-    border-radius: 3px;
-    padding: 12px 20px;
-    font-size: 12px;
-    color: var(--gold2);
-    z-index: 2000;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s;
-    box-shadow: var(--shadow);
-  }
-  .notification.show { transform: translateY(0); opacity: 1; }
-
-  .progress-bar {
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-top: 12px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold), var(--gold2));
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-
-  /* Champion */
-  .champion-card {
-    background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
-    border: 1px solid var(--gold);
-    border-radius: 4px;
-    padding: 32px;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  .champion-icon { font-size: 48px; margin-bottom: 12px; }
-  .champion-label { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
-  .champion-name { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--gold2); }
-
-  /* Results matrix */
-  .matrix-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-    margin-top: 8px;
-  }
-  .matrix-table th, .matrix-table td {
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    text-align: center;
-  }
+  .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+  .matrix-table th, .matrix-table td { padding: 7px 10px; border: 1px solid var(--border); text-align: center; }
   .matrix-table th { background: var(--surface2); color: var(--muted2); font-weight: 400; letter-spacing: 0.05em; }
   .matrix-table .name-col { text-align: left; color: var(--white); max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cell-win { color: var(--win); font-weight: 600; }
-  .cell-draw { color: var(--draw); }
-  .cell-loss { color: var(--loss); }
-  .cell-self { background: var(--surface3); color: var(--muted); }
+  .cell-win { color: var(--win); font-weight: 600; } .cell-draw { color: var(--draw); } .cell-loss { color: var(--loss); } .cell-self { background: var(--surface3); color: var(--muted); }
 
-  /* Playoff status */
-  .playoff-status {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-  .status-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 12px 16px;
-    flex: 1;
-    min-width: 120px;
-    text-align: center;
-  }
-  .status-value { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--gold2); }
-  .status-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .notification { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--gold); border-radius: 3px; padding: 12px 20px; font-size: 12px; color: var(--gold2); z-index: 2000; transform: translateY(100px); opacity: 0; transition: all 0.3s; box-shadow: var(--shadow); }
+  .notification.show { transform: translateY(0); opacity: 1; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 2px; transition: width 0.5s ease; }
 </style>
 </head>
 <body>
@@ -633,14 +214,13 @@
   </div>
   <div class="header-actions">
     <button class="btn" onclick="printTournament()">⊞ Печать</button>
-    <button class="btn" onclick="exportData()">↓ Экспорт JSON</button>
     <button class="btn btn-danger btn-sm" onclick="resetTournament()">✕ Сброс</button>
   </div>
 </header>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('setup')" id="tab-setup">⚙ Настройка</div>
-  <div class="tab" onclick="switchTab('groups')" id="tab-groups">◈ Групповая стадия</div>
+  <div class="tab" onclick="switchTab('groups')" id="tab-groups">◈ Группы</div>
   <div class="tab" onclick="switchTab('playoff')" id="tab-playoff">⬡ Плей-офф</div>
   <div class="tab" onclick="switchTab('results')" id="tab-results">★ Итоги</div>
 </div>
@@ -651,61 +231,61 @@
     <div class="section-header">
       <div>
         <div class="section-title">Настройка турнира</div>
-        <div class="section-sub">Введите параметры и список участников</div>
+        <div class="section-sub">Добавьте участников. Пол определится автоматически (можно изменить кликом).</div>
       </div>
     </div>
 
     <div class="setup-grid">
       <div>
         <div class="card">
-          <div class="card-title">♛ Параметры</div>
-          <div class="form-group">
-            <label class="form-label">Название турнира</label>
-            <input class="form-input" id="tourneyName" placeholder="Городской чемпионат 2025" value="Шахматный турнир">
+          <div class="card-title">♛ Участники</div>
+          
+          <button class="btn" id="sheets-load-btn" onclick="loadFromSheets()" style="width:100%; margin-bottom:16px; justify-content:center;">↓ Загрузить из таблицы (Google Sheets)</button>
+          
+          <div class="player-input-row">
+            <input type="text" id="playerNameInput" class="form-input" placeholder="Добавить вручную..." maxlength="40">
+            <button class="btn btn-gold" onclick="addPlayer()">+ Добавить</button>
           </div>
-          <div class="form-group">
-            <label class="form-label">Количество групп</label>
-            <input class="form-input form-select" id="numGroups" type="number" min="2" max="16" value="4" onchange="updatePlayerInputs()">
+
+          <div class="player-count">
+            Всего игроков: <span id="countTotal">0</span> 
+            ( Мужчин: <span style="color:var(--gold)" id="countM">0</span> | Женщин: <span style="color:var(--female)" id="countF">0</span> )
           </div>
-          <div class="form-group">
-            <label class="form-label">Тай-брейк при равенстве очков в группе</label>
-            <select class="form-input form-select" id="tiebreakMethod">
-              <option value="head2head">1. Личная встреча → 2. Коэффициент Бухгольца</option>
-              <option value="buchholz">Только коэффициент Бухгольца</option>
-              <option value="points">Только количество побед</option>
-            </select>
-          </div>
-          <div class="info-box">
-            <strong>Система очков (3-1-0):</strong><br>
-            Победа: <strong>3 очка</strong> · Ничья: <strong>1 очко</strong> · Поражение: <strong>0 очков</strong><br>
-            <span style="color:var(--muted); font-size:10px">4 игрока в каждой группе · 6 партий на группу · 1 победитель выходит в плей-офф</span>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:8px">
-            <button class="btn btn-gold" onclick="startTournament()" style="flex:1">▶ Начать турнир</button>
-          </div>
+          <ul class="player-list" id="playerList"></ul>
         </div>
       </div>
 
       <div>
         <div class="card">
-          <div class="card-title">♟ Участники <span id="player-count-badge" class="badge badge-gray" style="margin-left:auto">16 игроков</span></div>
-
-          <!-- Google Sheets import block -->
-          <div id="sheets-import-block" style="margin-bottom:14px; padding:12px 14px; background:var(--surface2); border:1px solid var(--border2); border-radius:3px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-              <span style="font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted2)">📋 Зарегистрированные участники</span>
-              <button class="btn" id="sheets-load-btn" onclick="loadFromSheets()" style="font-size:10px; padding:5px 12px;">↓ Загрузить из таблицы</button>
-            </div>
-            <div id="sheets-status" style="font-size:10px; color:var(--muted); min-height:14px;"></div>
-            <div id="sheets-preview" style="margin-top:8px; max-height:140px; overflow-y:auto; display:none;"></div>
+          <div class="card-title">⚙ Параметры</div>
+          <div class="form-group">
+            <label class="form-label">Название турнира</label>
+            <input class="form-input" id="tourneyName" placeholder="Городской чемпионат 2025" value="Шахматный турнир">
           </div>
-
-          <div id="players-list" class="players-list"></div>
-          <div style="margin-top:10px; color:var(--muted); font-size:10px; letter-spacing:0.08em">
-            4 игрока × <span id="groups-count-text">4</span> группы = <span id="total-players-text">16</span> участников
+          <div class="form-group">
+            <label class="form-label">Тай-брейк при равенстве очков в группе</label>
+            <select class="form-input form-select" id="tiebreakMethod">
+              <option value="head2head">1. Личная встреча → 2. Коэфф. Бухгольца</option>
+              <option value="buchholz">Только коэфф. Бухгольца</option>
+            </select>
           </div>
+          <div class="info-box">
+            <strong>Формат турнира:</strong><br>
+            Участники автоматически распределятся на группы по ~4 человека для каждой категории (М/Ж). <br>
+            Из каждой группы 1 победитель (или 2, если группа всего одна) выходит в плей-офф.<br><br>
+            <strong>Очки:</strong> Победа (3) · Ничья (1) · Поражение (0)
+          </div>
+          <button class="btn btn-gold" onclick="startTournament()" style="width:100%; padding:14px; font-size:12px;">▶ Сгенерировать сетки и начать</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY TABS (Injected into pages when started) -->
+  <div id="category-tabs-container" style="display:none;">
+    <div class="cat-tabs">
+      <button class="cat-tab active" data-cat="male" onclick="switchCategory('male')">Мужчины</button>
+      <button class="cat-tab" data-cat="female" onclick="switchCategory('female')">Женщины</button>
     </div>
   </div>
 
@@ -714,16 +294,14 @@
     <div class="section-header">
       <div>
         <div class="section-title">Групповая стадия</div>
-        <div class="section-sub" id="groups-subtitle">Введите результаты партий · Победители выходят в плей-офф</div>
+        <div class="section-sub" id="groups-subtitle">Введите результаты партий</div>
       </div>
       <div style="display:flex; gap:10px; align-items:center">
         <div id="group-progress-text" style="font-size:11px; color:var(--muted2)"></div>
         <button class="btn" onclick="advanceToPlayoff()">→ В плей-офф</button>
       </div>
     </div>
-    <div class="progress-bar" style="margin-bottom:24px">
-      <div class="progress-fill" id="group-progress-bar" style="width:0%"></div>
-    </div>
+    <div class="progress-bar" style="margin-bottom:24px"><div class="progress-fill" id="group-progress-bar" style="width:0%"></div></div>
     <div class="groups-grid" id="groups-container"></div>
   </div>
 
@@ -732,11 +310,13 @@
     <div class="section-header">
       <div>
         <div class="section-title">Плей-офф</div>
-        <div class="section-sub">Нажмите на игрока чтобы отметить победителя · При ничьей — тай-брейк на усмотрение арбитра</div>
+        <div class="section-sub">Нажмите на игрока чтобы отметить победителя</div>
       </div>
     </div>
-    <div id="champion-display"></div>
-    <div class="playoff-status" id="playoff-status"></div>
+    
+    <!-- Баннер Чемпиона появляется здесь -->
+    <div id="champion-display-playoff"></div>
+
     <div class="bracket-container">
       <div class="bracket" id="bracket-container"></div>
     </div>
@@ -750,749 +330,601 @@
         <div class="section-title">Итоги турнира</div>
         <div class="section-sub" id="tourney-name-display"></div>
       </div>
-      <button class="btn" onclick="printTournament()">⊞ Печать</button>
     </div>
     <div id="results-content"></div>
   </div>
 </main>
 
-<!-- Modal -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-title" id="modal-title">Подтверждение</div>
-    <div id="modal-body"></div>
-    <div class="modal-actions" id="modal-actions"></div>
-  </div>
-</div>
-
-<!-- Notification -->
 <div class="notification" id="notification"></div>
 
 <script>
 // ===== STATE =====
+let masterPlayers =[]; // { name, gender }
+let activeCategory = 'male'; 
+
 let T = {
   name: 'Шахматный турнир',
-  numGroups: 4,
   tiebreak: 'head2head',
-  players: [],   // [{id, name, group}]
-  groups: [],    // [{id, players:[ids], matches:[{p1,p2,result}]}]
-  bracket: [],   // rounds of matches [{p1,p2,winner}]
-  thirdPlace: null,
-  started: false
+  started: false,
+  male: null,
+  female: null
 };
 
-// ===== INIT =====
-function init() {
-  updatePlayerInputs();
-}
+// ===== GENDER GUESSING =====
+function guessGender(fullName) {
+  let name = fullName.replace(/^\d+[\.\s]+/, '').trim().toLowerCase();
+  if (name.includes('әйел') || name.includes('жен') || name.includes('девочка')) return 'female';
+  if (name.includes('еркек') || name.includes('муж') || name.includes('мальчик') || name.endsWith('ер')) return 'male';
+  name = name.replace(/\s+(әйел|еркек|жен|муж|девочка|мальчик|ер)$/i, '').trim();
 
-function updatePlayerInputs() {
-  const n = parseInt(document.getElementById('numGroups').value) || 4;
-  const total = n * 4;
-  document.getElementById('groups-count-text').textContent = n;
-  document.getElementById('total-players-text').textContent = total;
-  document.getElementById('player-count-badge').textContent = total + ' игроков';
+  const parts = name.split(/\s+/);
+  const firstName = parts[0];
 
-  const container = document.getElementById('players-list');
-  const existing = [...container.querySelectorAll('.player-name-input')].map(i => i.value);
-  container.innerHTML = '';
-
-  for (let i = 0; i < total; i++) {
-    const row = document.createElement('div');
-    row.className = 'player-row';
-    row.innerHTML = `
-      <span class="player-num">${i+1}</span>
-      <input class="player-name-input" placeholder="Игрок ${i+1}" value="${existing[i] || ''}" id="player-${i}">
-      <span style="font-size:10px; color:var(--muted)">Гр.${Math.floor(i/4)+1}</span>
-    `;
-    container.appendChild(row);
+  for (const part of parts) {
+    if (/(қызы|кызы|ова|ева|ина|ая)$/i.test(part)) return 'female';
+    if (/(ұлы|улы|ов|ев|ин|ий)$/i.test(part)) return 'male';
   }
+
+  const femaleNames =['асель', 'айгерим', 'меруерт', 'жұлдыз', 'жулдыз', 'ботагөз', 'салтанат', 'мақпал', 'камшат', 'перизат', 'шолпан', 'арайлым', 'аяулым', 'назым', 'айнур', 'баян', 'жібек', 'динара', 'мадина', 'зарина', 'сабина', 'амина', 'айша', 'томирис', 'ақбота', 'шұғыла', 'айзере', 'кәусар', 'жансая', 'гүлнұр', 'асылым', 'назерке', 'айдана', 'айман', 'маржан', 'аружан', 'айжан', 'тоғжан', 'жанель', 'лаура', 'әлия', 'индира', 'гульмира'];
+  if (femaleNames.includes(firstName)) return 'female';
+
+  const maleExceptions =['али', 'амир', 'ильяс', 'димаш', 'расул', 'арсен', 'алишер', 'рустам', 'тимур', 'дамир', 'мақсат', 'дастан', 'азамат', 'қайрат', 'мұстафа', 'иса', 'мұса', 'абдулла', 'хамза', 'илья', 'никита', 'нурлан', 'ержан', 'бауыржан', 'айдос', 'серік', 'абай', 'абылай', 'нұрсұлтан', 'дархан'];
+  if (maleExceptions.includes(firstName)) return 'male';
+
+  if (/(гүл|гуль|бике|шүкір|ерке)$/i.test(firstName)) return 'female';
+  if (/(лым|лім|рім|рим)$/i.test(firstName)) return 'female'; 
+  if (/(бек|бай|хан|ғали|гали|тай|берді|берди|бол|ддин)$/i.test(firstName)) return 'male';
+  if (/[аяя]$/i.test(firstName)) return 'female';
+  return 'male'; 
 }
 
-// ===== TOURNAMENT START =====
+// ===== SETUP =====
+document.getElementById('playerNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+
+function addPlayer() {
+  const inp = document.getElementById('playerNameInput'); const name = inp.value.trim();
+  if (!name) return; 
+  if (masterPlayers.find(p => p.name.toLowerCase() === name.toLowerCase())) return notify('Игрок уже добавлен');
+  masterPlayers.push({ name: name.replace(/\s+(әйел|еркек|жен|муж)$/i, ''), gender: guessGender(name) }); 
+  inp.value = ''; renderPlayerList(); inp.focus();
+}
+
+function removePlayer(i) { masterPlayers.splice(i, 1); renderPlayerList(); }
+function toggleGender(i) { const p = masterPlayers[i]; p.gender = p.gender === 'male' ? 'female' : 'male'; renderPlayerList(); }
+
+function renderPlayerList() {
+  const list = document.getElementById('playerList'); list.innerHTML = '';
+  let cM = 0, cF = 0;
+  masterPlayers.forEach((p, i) => {
+    if (p.gender === 'male') cM++; else cF++;
+    const li = document.createElement('li'); li.className = 'player-tag'; li.dataset.gender = p.gender;
+    const genderLabel = p.gender === 'male' ? 'М' : 'Ж';
+    const genderClass = p.gender === 'male' ? 'gender-m' : 'gender-f';
+    li.innerHTML = `<span>${p.name}</span><button class="gender-btn ${genderClass}" onclick="toggleGender(${i})" title="Сменить пол">${genderLabel}</button><span class="remove-tag" onclick="removePlayer(${i})">×</span>`;
+    list.appendChild(li); 
+  });
+  document.getElementById('countTotal').textContent = masterPlayers.length; 
+  document.getElementById('countM').textContent = cM;
+  document.getElementById('countF').textContent = cF;
+}
+
+// Google Sheets Import
+const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv';
+async function loadFromSheets() {
+  const btn = document.getElementById('sheets-load-btn'); btn.disabled = true; btn.textContent = 'Загрузка...';
+  try {
+    const cb = '&t=' + Date.now();
+    const proxies =[
+      'https://corsproxy.io/?' + encodeURIComponent(SHEETS_CSV_URL + cb),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEETS_CSV_URL + cb),
+      'https://thingproxy.freeboard.io/fetch/' + SHEETS_CSV_URL + cb,
+    ];
+    let text = null;
+    for (const url of proxies) { try { const r = await fetch(url); if (r.ok) { text = await r.text(); break; } } catch(e){} }
+    if (!text) throw new Error('network');
+
+    const rows = text.trim().split('\n').map(r => r.split(',')[0].replace(/^"|"$/g, '').trim()).filter(Boolean).slice(1);
+    let added = 0;
+    rows.forEach(n => {
+      if (!masterPlayers.find(p => p.name.toLowerCase() === n.toLowerCase())) {
+        masterPlayers.push({ name: n.replace(/\s+(әйел|еркек|жен|муж)$/i, ''), gender: guessGender(n) });
+        added++;
+      }
+    });
+    renderPlayerList(); notify(`Загружено ${added} новых игроков`);
+  } catch (e) { notify('Ошибка загрузки. Проверьте таблицу.'); }
+  btn.disabled = false; btn.textContent = '↓ Загрузить из таблицы (Google Sheets)';
+}
+
+// ===== START TOURNAMENT =====
 function startTournament() {
-  const n = parseInt(document.getElementById('numGroups').value) || 4;
-  const nameEl = document.getElementById('tourneyName');
+  const males = masterPlayers.filter(p => p.gender === 'male');
+  const females = masterPlayers.filter(p => p.gender === 'female');
+  
+  if (males.length < 2 && females.length < 2) return notify('Нужно минимум 2 участника в одной из категорий!');
 
-  // Collect players
-  const players = [];
-  for (let i = 0; i < n * 4; i++) {
-    const inp = document.getElementById('player-' + i);
-    players.push({ id: i, name: inp?.value.trim() || `Игрок ${i+1}`, group: Math.floor(i/4) });
-  }
+  T.name = document.getElementById('tourneyName').value || 'Шахматный турнир';
+  T.tiebreak = document.getElementById('tiebreakMethod').value;
+  T.started = true;
+  T.male = null; T.female = null;
 
-  // Build groups
-  const groups = [];
-  for (let g = 0; g < n; g++) {
-    const gPlayers = players.filter(p => p.group === g).map(p => p.id);
-    const matches = [];
-    for (let i = 0; i < gPlayers.length; i++) {
-      for (let j = i+1; j < gPlayers.length; j++) {
-        matches.push({ p1: gPlayers[i], p2: gPlayers[j], result: null }); // null, 'p1', 'p2', 'draw'
-      }
+  if (males.length >= 2) T.male = initCategoryState(males);
+  if (females.length >= 2) T.female = initCategoryState(females);
+
+  activeCategory = T.male ? 'male' : 'female';
+  document.getElementById('category-tabs-container').style.display = 'block';
+  
+  // Render tabs across all pages
+  document.querySelectorAll('.page').forEach(p => {
+    if (p.id !== 'page-setup' && !p.querySelector('.cat-tabs-placeholder')) {
+      const ph = document.createElement('div'); ph.className = 'cat-tabs-placeholder';
+      p.insertBefore(ph, p.children[1]);
     }
-    groups.push({ id: g, players: gPlayers, matches });
-  }
-
-  T = {
-    name: nameEl.value || 'Турнир',
-    numGroups: n,
-    tiebreak: document.getElementById('tiebreakMethod').value,
-    players,
-    groups,
-    bracket: [],
-    thirdPlace: null,
-    started: true
-  };
-
-  renderGroups();
+  });
+  
   switchTab('groups');
-  notify('Турнир начат! Введите результаты партий.');
+  notify('Турнир начат!');
 }
 
-// ===== GROUPS RENDERING =====
-function renderGroups() {
-  document.getElementById('groups-subtitle').textContent =
-    `${T.numGroups} групп · Победитель каждой группы выходит в плей-офф`;
+function initCategoryState(players) {
+  // Distribute into groups of ~4
+  const numGroups = Math.max(1, Math.ceil(players.length / 4));
+  const shuffled = [...players].sort(() => Math.random() - 0.5);
+  const groups = Array.from({ length: numGroups }, (_, id) => ({ id, players: [], matches:[] }));
+  
+  shuffled.forEach((p, i) => { groups[i % numGroups].players.push(i); });
 
-  const container = document.getElementById('groups-container');
-  container.innerHTML = '';
+  const statePlayers = shuffled.map((p, i) => ({ id: i, name: p.name }));
 
-  T.groups.forEach((group, gi) => {
-    const standings = getGroupStandings(group);
-    const leader = standings[0];
-    const allDone = group.matches.every(m => m.result !== null);
-    const done = group.matches.filter(m => m.result !== null).length;
-
-    const card = document.createElement('div');
-    card.className = 'group-card';
-
-    // Header
-    card.innerHTML = `
-      <div class="group-header">
-        <span>Группа ${String.fromCharCode(65+gi)}</span>
-        <span class="group-leader-badge">${done}/${group.matches.length} партий</span>
-      </div>
-    `;
-
-    // Standings
-    const standingsDiv = document.createElement('div');
-    standingsDiv.className = 'standings';
-    standingsDiv.innerHTML = `
-      <div class="standings-row header">
-        <span>#</span><span>Игрок</span><span title="Победы">В</span><span title="Ничьи">Н</span><span title="Поражения">П</span><span>Очки</span>
-      </div>
-    `;
-    standings.forEach((s, idx) => {
-      const row = document.createElement('div');
-      row.className = 'standings-row' + (idx === 0 && allDone ? ' leader' : '');
-      row.innerHTML = `
-        <span class="pos ${idx===0?'pos-1':''}">${idx+1}</span>
-        <span>${s.name}${idx===0&&allDone?' <span class="badge badge-gold">→ ПО</span>':''}</span>
-        <span class="stat">${s.wins}</span>
-        <span class="stat">${s.draws}</span>
-        <span class="stat">${s.losses}</span>
-        <span class="pts">${s.points}</span>
-      `;
-      standingsDiv.appendChild(row);
-    });
-    card.appendChild(standingsDiv);
-
-    // Matrix
-    const matrixDiv = document.createElement('div');
-    matrixDiv.style.cssText = 'padding:10px 16px; border-top:1px solid var(--border); background:var(--surface2)';
-    matrixDiv.innerHTML = buildMatrix(group, standings);
-    card.appendChild(matrixDiv);
-
-    // Matches
-    const matchDiv = document.createElement('div');
-    matchDiv.className = 'matches-section';
-    matchDiv.innerHTML = `<div class="matches-title">Партии</div>`;
-    group.matches.forEach((match, mi) => {
-      const p1 = T.players[match.p1];
-      const p2 = T.players[match.p2];
-      const row = document.createElement('div');
-      row.className = 'match-row';
-      row.innerHTML = `
-        <span class="match-player right">${p1.name}</span>
-        <span class="match-vs">vs</span>
-        <span class="match-player">${p2.name}</span>
-        <div class="result-btns">
-          <button class="result-btn ${match.result==='p1'?'active-win':''}" onclick="setResult(${gi},${mi},'p1')" title="${p1.name} победил">1-0</button>
-          <button class="result-btn ${match.result==='draw'?'active-draw':''}" onclick="setResult(${gi},${mi},'draw')" title="Ничья">Ничья</button>
-          <button class="result-btn ${match.result==='p2'?'active-win':''}" onclick="setResult(${gi},${mi},'p2')" title="${p2.name} победил">0-1</button>
-        </div>
-      `;
-      matchDiv.appendChild(row);
-    });
-    card.appendChild(matchDiv);
-
-    container.appendChild(card);
-  });
-
-  updateGroupProgress();
-}
-
-function buildMatrix(group, standings) {
-  const ids = standings.map(s => s.id);
-  const players = standings.map(s => T.players[s.id]);
-  let html = `<table class="matrix-table"><tr><th></th>`;
-  players.forEach((p,i) => { html += `<th title="${p.name}">${String.fromCharCode(65+i)}</th>`; });
-  html += `<th>Б</th></tr>`;
-
-  ids.forEach((id, ri) => {
-    const p = T.players[id];
-    let pts = 0;
-    html += `<tr><td class="name-col">${String.fromCharCode(65+ri)}. ${p.name}</td>`;
-    ids.forEach((id2, ci) => {
-      if (id === id2) { html += `<td class="cell-self">·</td>`; return; }
-      const m = group.matches.find(m => (m.p1===id&&m.p2===id2)||(m.p1===id2&&m.p2===id));
-      if (!m || m.result === null) { html += `<td style="color:var(--muted)">—</td>`; return; }
-      let res = '';
-      if (m.result === 'draw') { res = '<span class="cell-draw">½</span>'; pts += 1; }
-      else if ((m.result==='p1'&&m.p1===id)||(m.result==='p2'&&m.p2===id)) { res = '<span class="cell-win">1</span>'; pts += 3; }
-      else { res = '<span class="cell-loss">0</span>'; }
-      html += `<td>${res}</td>`;
-    });
-    html += `<td style="color:var(--gold2); font-weight:600">${pts}</td></tr>`;
-  });
-  html += '</table>';
-  return html;
-}
-
-function getGroupStandings(group) {
-  const stats = {};
-  group.players.forEach(id => { stats[id] = { id, points:0, wins:0, draws:0, losses:0, buchholz:0 }; });
-
-  group.matches.forEach(m => {
-    if (m.result === null) return;
-    if (m.result === 'p1') {
-      stats[m.p1].points += 3; stats[m.p1].wins++;
-      stats[m.p2].losses++;
-    } else if (m.result === 'p2') {
-      stats[m.p2].points += 3; stats[m.p2].wins++;
-      stats[m.p1].losses++;
-    } else {
-      stats[m.p1].points += 1; stats[m.p1].draws++;
-      stats[m.p2].points += 1; stats[m.p2].draws++;
-    }
-  });
-
-  // Buchholz: sum of opponents' points
-  group.players.forEach(id => {
-    const opponents = group.matches
-      .filter(m => m.p1===id||m.p2===id)
-      .map(m => m.p1===id?m.p2:m.p1);
-    stats[id].buchholz = opponents.reduce((s,oid) => s + stats[oid].points, 0);
-    stats[id].name = T.players[id].name;
-  });
-
-  return Object.values(stats).sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    // Tiebreak: head to head
-    const h2h = group.matches.find(m => (m.p1===a.id&&m.p2===b.id)||(m.p1===b.id&&m.p2===a.id));
-    if (h2h && h2h.result !== null && h2h.result !== 'draw') {
-      const aWon = (h2h.result==='p1'&&h2h.p1===a.id)||(h2h.result==='p2'&&h2h.p2===a.id);
-      return aWon ? -1 : 1;
-    }
-    // Buchholz
-    return b.buchholz - a.buchholz;
-  });
-}
-
-function setResult(gi, mi, result) {
-  T.groups[gi].matches[mi].result = result;
-  renderGroups();
-}
-
-function updateGroupProgress() {
-  const total = T.groups.reduce((s,g) => s + g.matches.length, 0);
-  const done = T.groups.reduce((s,g) => s + g.matches.filter(m=>m.result!==null).length, 0);
-  const pct = total ? Math.round(done/total*100) : 0;
-  document.getElementById('group-progress-bar').style.width = pct + '%';
-  document.getElementById('group-progress-text').textContent = `${done}/${total} партий (${pct}%)`;
-}
-
-// ===== PLAYOFF =====
-function advanceToPlayoff() {
-  // Check all groups done
-  const incomplete = T.groups.filter(g => g.matches.some(m => m.result === null));
-  if (incomplete.length > 0) {
-    showModal('Не все партии сыграны',
-      `В ${incomplete.length} группах ещё не введены все результаты. Продолжить?`,
-      [{ label: 'Продолжить', cls: 'btn-gold', action: () => { closeModal(); buildBracket(); } },
-       { label: 'Отмена', cls: 'btn', action: closeModal }]);
-    return;
-  }
-  buildBracket();
-}
-
-function buildBracket() {
-  // Get group winners
-  const winners = T.groups.map(g => {
-    const standings = getGroupStandings(g);
-    return standings[0].id;
-  });
-
-  // Build bracket rounds
-  T.bracket = [];
-  // First round
-  const firstRound = [];
-  for (let i = 0; i < winners.length; i += 2) {
-    firstRound.push({ p1: winners[i], p2: winners[i+1] !== undefined ? winners[i+1] : null, winner: null });
-  }
-  T.bracket.push(firstRound);
-
-  // Generate remaining rounds based on first round size
-  let size = firstRound.length;
-  while (size > 1) {
-    size = Math.ceil(size / 2);
-    const round = [];
-    for (let i = 0; i < size; i++) {
-      round.push({ p1: null, p2: null, winner: null });
-    }
-    T.bracket.push(round);
-  }
-
-  T.thirdPlace = { p1: null, p2: null, winner: null };
-
-  renderPlayoff();
-  switchTab('playoff');
-  notify('Плей-офф начат! Нажмите на победителя каждой пары.');
-}
-
-function renderPlayoff() {
-  const container = document.getElementById('bracket-container');
-  container.innerHTML = '';
-
-  const roundNames = getRoundNames(T.bracket.length);
-
-  T.bracket.forEach((round, ri) => {
-    const roundDiv = document.createElement('div');
-    roundDiv.className = 'bracket-round';
-    roundDiv.innerHTML = `<div class="round-header">${roundNames[ri]}</div>`;
-
-    const matchesDiv = document.createElement('div');
-    matchesDiv.className = 'round-matches';
-
-    round.forEach((match, mi) => {
-      const matchEl = document.createElement('div');
-      matchEl.className = 'bracket-match';
-      matchEl.style.minWidth = '180px';
-
-      const p1Name = match.p1 !== null ? T.players[match.p1].name : '—';
-      const p2Name = match.p2 !== null ? T.players[match.p2].name : '—';
-
-      // Bye: if only one player present, auto-advance them
-      const isBye = (match.p1 !== null) !== (match.p2 !== null);
-      if (isBye && match.winner === null) {
-        setTimeout(() => setPlayoffWinner(ri, mi, match.p1 !== null ? 'p1' : 'p2'), 0);
+  groups.forEach(g => {
+    for (let i = 0; i < g.players.length; i++) {
+      for (let j = i+1; j < g.players.length; j++) {
+        g.matches.push({ p1: g.players[i], p2: g.players[j], result: null });
       }
-
-      const p1Clickable = match.p1 !== null && match.p2 !== null;
-      const p2Clickable = match.p1 !== null && match.p2 !== null;
-
-      matchEl.innerHTML = `
-        <div class="bracket-player ${match.winner===match.p1&&match.p1!==null?'winner':''} ${match.winner!==null&&match.winner!==match.p1&&match.p1!==null?'loser':''}"
-          onclick="${p1Clickable ? `setPlayoffWinner(${ri},${mi},'p1')` : ''}" style="${match.p1===null?'opacity:0.35;cursor:default':''}">
-          <span class="bracket-player-name">${p1Name}</span>
-          ${match.winner===match.p1&&match.p1!==null?'<span class="bracket-player-check">✓</span>':''}
-        </div>
-        <div class="bracket-player ${match.winner===match.p2&&match.p2!==null?'winner':''} ${match.winner!==null&&match.winner!==match.p2&&match.p2!==null?'loser':''}"
-          onclick="${p2Clickable ? `setPlayoffWinner(${ri},${mi},'p2')` : ''}" style="${match.p2===null?'opacity:0.35;cursor:default':''}">
-          <span class="bracket-player-name">${p2Name}</span>
-          ${match.winner===match.p2&&match.p2!==null?'<span class="bracket-player-check">✓</span>':''}
-        </div>
-      `;
-
-      matchesDiv.appendChild(matchEl);
-    });
-
-    roundDiv.appendChild(matchesDiv);
-    container.appendChild(roundDiv);
-
-    // Add connector lines between rounds (CSS hack)
-    if (ri < T.bracket.length - 1) {
-      const connDiv = document.createElement('div');
-      connDiv.style.cssText = 'width:32px; display:flex; flex-direction:column; justify-content:space-around; padding:42px 0;';
-      container.appendChild(connDiv);
     }
   });
 
-  // Third place
-  const tpSection = document.getElementById('third-place-section');
-  if (T.bracket.length >= 2 && T.thirdPlace) {
-    const semi = T.bracket[T.bracket.length - 2];
-    // Losers of semis
-    const losers = semi.map(m => {
-      if (m.winner === null) return null;
-      return m.winner === m.p1 ? m.p2 : m.p1;
-    }).filter(l => l !== null);
-
-    if (losers.length >= 2) {
-      T.thirdPlace.p1 = losers[0];
-      T.thirdPlace.p2 = losers[1];
-    }
-
-    if (T.thirdPlace.p1 !== null && T.thirdPlace.p2 !== null) {
-      const tp = T.thirdPlace;
-      tpSection.innerHTML = `
-        <div class="card" style="max-width:360px; margin-top:20px">
-          <div class="card-title">🥉 Матч за 3-е место</div>
-          <div class="bracket-match" style="max-width:240px">
-            <div class="bracket-player ${tp.winner===tp.p1?'winner':''} ${tp.winner!==null&&tp.winner!==tp.p1?'loser':''}"
-              onclick="setThirdPlace('p1')">
-              <span class="bracket-player-name">${T.players[tp.p1].name}</span>
-              ${tp.winner===tp.p1?'<span class="bracket-player-check">✓</span>':''}
-            </div>
-            <div class="bracket-player ${tp.winner===tp.p2?'winner':''} ${tp.winner!==null&&tp.winner!==tp.p2?'loser':''}"
-              onclick="setThirdPlace('p2')">
-              <span class="bracket-player-name">${T.players[tp.p2].name}</span>
-              ${tp.winner===tp.p2?'<span class="bracket-player-check">✓</span>':''}
-            </div>
-          </div>
-        </div>
-      `;
-    } else {
-      tpSection.innerHTML = '';
-    }
-  } else {
-    tpSection.innerHTML = '';
-  }
-
-  // Champion
-  const finalMatch = T.bracket[T.bracket.length - 1]?.[0];
-  const champDiv = document.getElementById('champion-display');
-  if (finalMatch?.winner !== null && finalMatch?.winner !== undefined) {
-    champDiv.innerHTML = `
-      <div class="champion-card">
-        <div class="champion-icon">🏆</div>
-        <div class="champion-label">Чемпион турнира</div>
-        <div class="champion-name">${T.players[finalMatch.winner].name}</div>
-      </div>
-    `;
-  } else {
-    champDiv.innerHTML = '';
-  }
-
-  // Stats
-  const doneMatches = T.bracket.flat().filter(m => m.winner !== null).length;
-  const totalMatches = T.bracket.flat().filter(m => m.p1 !== null && m.p2 !== null).length;
-  document.getElementById('playoff-status').innerHTML = `
-    <div class="status-card"><div class="status-value">${T.numGroups}</div><div class="status-label">Участников</div></div>
-    <div class="status-card"><div class="status-value">${T.bracket.length}</div><div class="status-label">Раундов</div></div>
-    <div class="status-card"><div class="status-value">${doneMatches}/${totalMatches}</div><div class="status-label">Матчей сыграно</div></div>
-  `;
-
-  renderResults();
+  return { players: statePlayers, groups, bracket:[], thirdPlace: null, isPlayoff: false };
 }
 
-function setPlayoffWinner(ri, mi, side) {
-  const match = T.bracket[ri][mi];
-  const winnerId = side === 'p1' ? match.p1 : match.p2;
-  const loserId = side === 'p1' ? match.p2 : match.p1;
-
-  match.winner = winnerId;
-
-  // Propagate winner to next round
-  if (ri + 1 < T.bracket.length) {
-    const nextRoundIdx = Math.floor(mi / 2);
-    const isFirstSlot = mi % 2 === 0;
-    const nextMatch = T.bracket[ri + 1][nextRoundIdx];
-    if (isFirstSlot) nextMatch.p1 = winnerId;
-    else nextMatch.p2 = winnerId;
-    // Clear previous results if changed
-    nextMatch.winner = null;
-  }
-
-  renderPlayoff();
-}
-
-function setThirdPlace(side) {
-  const tp = T.thirdPlace;
-  tp.winner = side === 'p1' ? tp.p1 : tp.p2;
-  renderPlayoff();
-}
-
-function getRoundNames(total) {
-  const base = ['Финал', 'Полуфинал', '¼ финала', '⅛ финала', '1/16 финала', '1/32 финала'];
-  const names = [];
-  for (let i = 0; i < total; i++) {
-    names.unshift(base[i] || `Раунд ${i+1}`);
-  }
-  return names;
-}
-
-// ===== RESULTS =====
-function renderResults() {
-  document.getElementById('tourney-name-display').textContent = T.name;
-
-  const finalMatch = T.bracket[T.bracket.length - 1]?.[0];
-  const champion = finalMatch?.winner !== null && finalMatch?.winner !== undefined ? T.players[finalMatch.winner] : null;
-  const runnerUp = finalMatch?.winner !== null && finalMatch?.winner !== undefined
-    ? T.players[finalMatch.winner === finalMatch.p1 ? finalMatch.p2 : finalMatch.p1]
-    : null;
-  const third = T.thirdPlace?.winner !== null && T.thirdPlace?.winner !== undefined ? T.players[T.thirdPlace.winner] : null;
-
-  // Group winners
-  const groupWinners = T.groups.map((g, gi) => {
-    const standings = getGroupStandings(g);
-    return { player: T.players[standings[0].id], group: gi, points: standings[0].points, wins: standings[0].wins, draws: standings[0].draws };
+function switchCategory(cat) {
+  if (!T[cat]) return notify('В этой категории нет турнира.');
+  activeCategory = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === cat);
   });
-
-  let html = '';
-
-  // === PRIZES ===
-  if (champion) {
-    html += `
-      <div class="champion-card" style="margin-bottom:28px">
-        <div class="champion-icon">🏆</div>
-        <div class="champion-label">Чемпион турнира</div>
-        <div class="champion-name">${champion.name}</div>
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:36px">
-        <div style="background:linear-gradient(160deg,rgba(201,168,76,0.18),rgba(201,168,76,0.04)); border:1px solid rgba(201,168,76,0.5); border-radius:4px; padding:28px 20px; text-align:center; order:2">
-          <div style="font-size:40px; margin-bottom:10px">🥇</div>
-          <div style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:10px">1-е место</div>
-          <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--gold2); font-weight:700">${champion.name}</div>
-        </div>
-        <div style="background:var(--surface); border:1px solid var(--border2); border-radius:4px; padding:22px 20px; text-align:center; order:1; align-self:end">
-          <div style="font-size:34px; margin-bottom:10px">🥈</div>
-          <div style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted2); margin-bottom:10px">2-е место</div>
-          <div style="font-family:'Playfair Display',serif; font-size:17px; color:var(--white)">${runnerUp?.name || '—'}</div>
-        </div>
-        <div style="background:var(--surface); border:1px solid var(--border2); border-radius:4px; padding:22px 20px; text-align:center; order:3; align-self:end">
-          <div style="font-size:34px; margin-bottom:10px">🥉</div>
-          <div style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted2); margin-bottom:10px">3-е место</div>
-          <div style="font-family:'Playfair Display',serif; font-size:17px; color:var(--white)">${third?.name || '—'}</div>
-        </div>
-      </div>
-    `;
-  } else {
-    html += `<div class="info-box" style="margin-bottom:28px">Плей-офф ещё не завершён — призовые места будут определены после финала.</div>`;
-  }
-
-  // === GROUP WINNERS ===
-  html += `
-    <div style="font-family:'Playfair Display',serif; font-size:16px; color:var(--gold2); margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px">
-      ♛ Победители групп
-    </div>
-    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:36px">
-  `;
-  groupWinners.forEach(w => {
-    html += `
-      <div style="background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:16px 18px; display:flex; align-items:center; gap:14px">
-        <div style="font-size:22px; flex-shrink:0">♟</div>
-        <div style="min-width:0">
-          <div style="font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:4px">Группа ${String.fromCharCode(65+w.group)}</div>
-          <div style="font-size:13px; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${w.player.name}</div>
-          <div style="font-size:10px; color:var(--muted2); margin-top:3px">${w.wins}П · ${w.draws}Н · <span style="color:var(--gold2); font-weight:600">${w.points} очков</span></div>
-        </div>
-      </div>
-    `;
-  });
-  html += `</div>`;
-
-  // === GROUP STANDINGS (collapsed) ===
-  html += `
-    <div style="font-family:'Playfair Display',serif; font-size:16px; color:var(--gold2); margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border)">
-      ◈ Итоги групповой стадии
-    </div>
-    <div class="groups-grid">
-  `;
-  T.groups.forEach((group, gi) => {
-    const standings = getGroupStandings(group);
-    html += `
-      <div class="card" style="padding:0; overflow:hidden">
-        <div class="group-header">Группа ${String.fromCharCode(65+gi)}</div>
-        <table style="width:100%; font-size:12px; border-collapse:collapse">
-          <tr style="background:var(--surface2)">
-            <td style="padding:5px 12px; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted)">#</td>
-            <td style="padding:5px 12px; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted)">Игрок</td>
-            <td style="padding:5px 8px; text-align:center; font-size:9px; color:var(--muted)">В</td>
-            <td style="padding:5px 8px; text-align:center; font-size:9px; color:var(--muted)">Н</td>
-            <td style="padding:5px 8px; text-align:center; font-size:9px; color:var(--muted)">П</td>
-            <td style="padding:5px 12px; text-align:center; font-size:9px; color:var(--muted)">Очки</td>
-          </tr>
-    `;
-    standings.forEach((s, idx) => {
-      const isLeader = idx === 0;
-      html += `<tr style="border-top:1px solid var(--border); background:${isLeader?'rgba(201,168,76,0.05)':'transparent'}">
-        <td style="padding:8px 12px; color:${isLeader?'var(--gold2)':'var(--muted)'}; font-weight:${isLeader?'600':'400'}">${idx+1}</td>
-        <td style="padding:8px 12px; color:${isLeader?'var(--gold2)':'var(--white)'}">
-          ${s.name}${isLeader?'&nbsp;<span class="badge badge-gold">→&nbsp;ПО</span>':''}
-        </td>
-        <td style="padding:8px; text-align:center; color:var(--muted2)">${s.wins}</td>
-        <td style="padding:8px; text-align:center; color:var(--muted2)">${s.draws}</td>
-        <td style="padding:8px; text-align:center; color:var(--muted2)">${s.losses}</td>
-        <td style="padding:8px 12px; text-align:center; color:var(--gold2); font-weight:600">${s.points}</td>
-      </tr>`;
-    });
-    html += `</table></div>`;
-  });
-  html += `</div>`;
-
-  document.getElementById('results-content').innerHTML = html;
+  // Re-render current page
+  if (document.getElementById('page-groups').classList.contains('active')) renderGroups();
+  if (document.getElementById('page-playoff').classList.contains('active')) renderPlayoff();
+  if (document.getElementById('page-results').classList.contains('active')) renderResults();
 }
 
-// ===== UI HELPERS =====
+function moveTabsToCurrentPage(pageId) {
+  const page = document.getElementById('page-' + pageId);
+  const placeholder = page.querySelector('.cat-tabs-placeholder');
+  const tabs = document.getElementById('category-tabs-container');
+  if (placeholder && tabs) {
+    placeholder.appendChild(tabs.firstElementChild || tabs);
+    tabs.style.display = 'block';
+  }
+}
+
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  document.getElementById('page-' + tab).classList.add('active');
-  if (tab === 'results') renderResults();
-}
+  const p = document.getElementById('page-' + tab);
+  p.classList.add('active');
 
-function notify(msg) {
-  const el = document.getElementById('notification');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-function showModal(title, body, actions) {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML = `<p style="color:var(--muted2); font-size:12px; line-height:1.6">${body}</p>`;
-  const actDiv = document.getElementById('modal-actions');
-  actDiv.innerHTML = '';
-  actions.forEach(a => {
-    const btn = document.createElement('button');
-    btn.className = 'btn ' + (a.cls || '');
-    btn.textContent = a.label;
-    btn.onclick = a.action;
-    actDiv.appendChild(btn);
-  });
-  document.getElementById('modal-overlay').classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-}
-
-function resetTournament() {
-  showModal('Сброс турнира', 'Все данные будут удалены. Продолжить?',
-    [{ label: 'Сбросить', cls: 'btn-danger', action: () => {
-      T = { name:'', numGroups:4, tiebreak:'head2head', players:[], groups:[], bracket:[], thirdPlace:null, started:false };
-      closeModal();
-      switchTab('setup');
-      updatePlayerInputs();
-      notify('Турнир сброшен.');
-    }},
-     { label: 'Отмена', cls: 'btn', action: closeModal }]);
-}
-
-function printTournament() {
-  window.print();
-}
-
-function exportData() {
-  const json = JSON.stringify(T, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `tournament-${T.name.replace(/\s+/g,'-')}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  notify('Данные экспортированы.');
-}
-
-// Close modal on overlay click
-document.getElementById('modal-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// ===== GOOGLE SHEETS IMPORT =====
-const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_VpcQRhHlQLaODwHAQswseuSwQYDm3d1F1lwlu0OhuGMeIh1JQnaBwUk-8O2Ah7AzkL2ftswIA20Z/pub?gid=481486323&single=true&output=csv';
-
-async function loadFromSheets() {
-  const btn = document.getElementById('sheets-load-btn');
-  const status = document.getElementById('sheets-status');
-  const preview = document.getElementById('sheets-preview');
-
-  btn.disabled = true;
-  btn.textContent = 'загрузка...';
-  status.style.color = 'var(--muted2)';
-  status.textContent = 'Подключение к таблице...';
-  preview.style.display = 'none';
-
-  try {
-    const cacheBust = '&t=' + Date.now();
-    const proxies = [
-      'https://corsproxy.io/?' + encodeURIComponent(SHEETS_CSV_URL + cacheBust),
-      'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEETS_CSV_URL + cacheBust),
-      'https://thingproxy.freeboard.io/fetch/' + SHEETS_CSV_URL + cacheBust,
-    ];
-    let text = null;
-    for (const proxyUrl of proxies) {
-      try {
-        const r = await fetch(proxyUrl);
-        if (r.ok) { text = await r.text(); break; }
-      } catch(e) { continue; }
+  if (T.started) {
+    // Inject the M/F tabs below the section header
+    const catTabs = document.querySelector('.cat-tabs');
+    if (catTabs && tab !== 'setup') {
+      p.insertBefore(catTabs, p.children[1]);
     }
-    if (!text) throw new Error('network');
-
-    const rows = text.trim().split('\n').map(r => {
-      const fields = [];
-      let cur = '', inQ = false;
-      for (let i = 0; i < r.length; i++) {
-        if (r[i] === '"') { inQ = !inQ; }
-        else if (r[i] === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
-        else cur += r[i];
-      }
-      fields.push(cur.trim());
-      return fields;
+    
+    // Update active category buttons
+    document.querySelectorAll('.cat-tab').forEach(t => {
+      t.style.display = T[t.dataset.cat] ? 'block' : 'none';
     });
 
-    // r[0] = Имя (полное), r[1] = Школа, r[2] = Дисциплина
-    const dataRows = rows.slice(1).filter(r => r[0] && r[0].trim());
-    if (dataRows.length === 0) {
-      status.style.color = 'var(--red)';
-      status.textContent = 'Таблица пуста.';
-      return;
-    }
-
-    const names = dataRows.map(r => (r[0] || '').trim()).filter(Boolean);
-
-    // Auto-adjust number of groups so slots >= participants
-    // Each group holds 4 players, so groups = ceil(names.length / 4)
-    const neededGroups = Math.max(2, Math.ceil(names.length / 4));
-    const groupInput = document.getElementById('numGroups');
-    const prevGroups = parseInt(groupInput.value) || 4;
-    if (neededGroups !== prevGroups) {
-      groupInput.value = neededGroups;
-      updatePlayerInputs(); // re-renders the inputs with new slot count
-    }
-
-    preview.style.display = 'block';
-    preview.innerHTML = names.map((n, i) =>
-      '<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--border);color:var(--white);display:flex;gap:8px;">' +
-      '<span style="color:var(--muted);min-width:20px">' + (i+1) + '.</span>' +
-      '<span>' + n + '</span></div>'
-    ).join('');
-
-    const inputs = document.querySelectorAll('.player-name-input');
-    inputs.forEach((inp, i) => { inp.value = names[i] || ''; });
-
-    const totalSlots = neededGroups * 4;
-    const free = totalSlots - names.length;
-    const groupMsg = neededGroups !== prevGroups ? ' · групп: ' + neededGroups : '';
-    status.style.color = 'var(--win)';
-    status.textContent = '✓ ' + names.length + ' участников' + groupMsg + ' · ' + free + ' слотов свободно';
-    notify('Загружено ' + names.length + ' участников · групп автоматически: ' + neededGroups);
-
-  } catch (e) {
-    status.style.color = 'var(--red)';
-    status.textContent = '✕ Не удалось загрузить. Проверьте доступ к таблице.';
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '↓ Загрузить из таблицы';
+    if (tab === 'groups') renderGroups();
+    else if (tab === 'playoff') renderPlayoff();
+    else if (tab === 'results') renderResults();
   }
 }
 
-init();
+// ===== GROUPS RENDERING =====
+function renderGroups() {
+  const t = T[activeCategory];
+  if (!t) return;
+  const container = document.getElementById('groups-container');
+  container.innerHTML = '';
+  document.getElementById('groups-subtitle').textContent = `${t.groups.length} групп · Победители выходят в плей-офф`;
+
+  t.groups.forEach((group, gi) => {
+    const standings = getGroupStandings(activeCategory, group);
+    const allDone = group.matches.every(m => m.result !== null);
+    const done = group.matches.filter(m => m.result !== null).length;
+
+    const card = document.createElement('div'); card.className = 'group-card';
+    card.innerHTML = `<div class="group-header ${activeCategory === 'female' ? 'female' : ''}">
+      <span>Группа ${String.fromCharCode(65+gi)}</span>
+      <span class="badge ${activeCategory === 'male' ? 'badge-gold' : ''}" style="${activeCategory === 'female' ? 'background:var(--female-dim);color:var(--female2);border:1px solid var(--female)' : ''}">${done}/${group.matches.length} партий</span>
+    </div>`;
+
+    // Standings
+    const sDiv = document.createElement('div'); sDiv.className = 'standings';
+    sDiv.innerHTML = `<div class="standings-row header"><span>#</span><span>Игрок</span><span>В</span><span>Н</span><span>П</span><span>Очки</span></div>`;
+    
+    // Check if 1 group scenario (top 2 advance)
+    const advanceCount = t.groups.length === 1 ? 2 : 1;
+
+    standings.forEach((s, idx) => {
+      const advances = allDone && idx < advanceCount;
+      sDiv.innerHTML += `
+        <div class="standings-row ${advances ? 'leader' : ''}">
+          <span class="pos ${advances?'pos-1':''}">${idx+1}</span>
+          <span>${s.name}${advances?` <span class="badge ${activeCategory==='male'?'badge-gold':''}" style="${activeCategory==='female'?'background:var(--female-dim);color:var(--female2);border:1px solid var(--female)':''}">&rarr; ПО</span>`:''}</span>
+          <span class="stat">${s.wins}</span><span class="stat">${s.draws}</span><span class="stat">${s.losses}</span>
+          <span class="pts" style="color:${activeCategory==='female'?'var(--female2)':'var(--gold2)'}">${s.points}</span>
+        </div>`;
+    });
+    card.appendChild(sDiv);
+
+    // Matrix
+    const mDiv = document.createElement('div'); mDiv.style.cssText = 'padding:10px 16px; border-top:1px solid var(--border); background:var(--surface2)';
+    mDiv.innerHTML = buildMatrix(activeCategory, group, standings);
+    card.appendChild(mDiv);
+
+    // Matches
+    const matchDiv = document.createElement('div'); matchDiv.className = 'matches-section';
+    group.matches.forEach((m, mi) => {
+      const p1 = t.players[m.p1], p2 = t.players[m.p2];
+      matchDiv.innerHTML += `
+        <div class="match-row">
+          <span class="match-player right">${p1.name}</span> <span style="color:var(--muted);font-size:9px">vs</span> <span class="match-player">${p2.name}</span>
+          <div class="result-btns">
+            <button class="result-btn ${m.result==='p1'?'active-win':''}" onclick="setResult('${activeCategory}',${gi},${mi},'p1')">1-0</button>
+            <button class="result-btn ${m.result==='draw'?'active-draw':''}" onclick="setResult('${activeCategory}',${gi},${mi},'draw')">½</button>
+            <button class="result-btn ${m.result==='p2'?'active-win':''}" onclick="setResult('${activeCategory}',${gi},${mi},'p2')">0-1</button>
+          </div>
+        </div>`;
+    });
+    card.appendChild(matchDiv);
+    container.appendChild(card);
+  });
+  updateGroupProgress();
+}
+
+function buildMatrix(cat, group, standings) {
+  const ids = standings.map(s => s.id);
+  const players = standings.map(s => T[cat].players[s.id]);
+  let html = `<table class="matrix-table"><tr><th></th>`;
+  players.forEach((p,i) => html += `<th title="${p.name}">${String.fromCharCode(65+i)}</th>`);
+  html += `<th>Б</th></tr>`;
+
+  ids.forEach((id, ri) => {
+    let pts = 0;
+    html += `<tr><td class="name-col">${String.fromCharCode(65+ri)}. ${T[cat].players[id].name}</td>`;
+    ids.forEach((id2) => {
+      if (id === id2) { html += `<td class="cell-self">·</td>`; return; }
+      const m = group.matches.find(m => (m.p1===id&&m.p2===id2)||(m.p1===id2&&m.p2===id));
+      if (!m || m.result === null) { html += `<td style="color:var(--muted)">—</td>`; return; }
+      if (m.result === 'draw') { html += `<td><span class="cell-draw">½</span></td>`; pts += 1; }
+      else if ((m.result==='p1'&&m.p1===id)||(m.result==='p2'&&m.p2===id)) { html += `<td><span class="cell-win">1</span></td>`; pts += 3; }
+      else { html += `<td><span class="cell-loss">0</span></td>`; }
+    });
+    html += `<td style="color:${cat==='female'?'var(--female2)':'var(--gold2)'}; font-weight:600">${pts}</td></tr>`;
+  });
+  return html + '</table>';
+}
+
+function getGroupStandings(cat, group) {
+  const stats = {};
+  group.players.forEach(id => { stats[id] = { id, points:0, wins:0, draws:0, losses:0, buchholz:0, name: T[cat].players[id].name }; });
+
+  group.matches.forEach(m => {
+    if (m.result === null) return;
+    if (m.result === 'p1') { stats[m.p1].points += 3; stats[m.p1].wins++; stats[m.p2].losses++; } 
+    else if (m.result === 'p2') { stats[m.p2].points += 3; stats[m.p2].wins++; stats[m.p1].losses++; } 
+    else { stats[m.p1].points += 1; stats[m.p1].draws++; stats[m.p2].points += 1; stats[m.p2].draws++; }
+  });
+
+  group.players.forEach(id => {
+    const opps = group.matches.filter(m => m.p1===id||m.p2===id).map(m => m.p1===id?m.p2:m.p1);
+    stats[id].buchholz = opps.reduce((s,oid) => s + stats[oid].points, 0);
+  });
+
+  return Object.values(stats).sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (T.tiebreak === 'head2head') {
+      const h2h = group.matches.find(m => (m.p1===a.id&&m.p2===b.id)||(m.p1===b.id&&m.p2===a.id));
+      if (h2h && h2h.result !== null && h2h.result !== 'draw') {
+        const aWon = (h2h.result==='p1'&&h2h.p1===a.id)||(h2h.result==='p2'&&h2h.p2===a.id);
+        return aWon ? -1 : 1;
+      }
+    }
+    return b.buchholz - a.buchholz;
+  });
+}
+
+function setResult(cat, gi, mi, res) { T[cat].groups[gi].matches[mi].result = res; if (cat === activeCategory) renderGroups(); }
+
+function updateGroupProgress() {
+  const t = T[activeCategory]; if (!t) return;
+  const tot = t.groups.reduce((s,g) => s + g.matches.length, 0);
+  const dn = t.groups.reduce((s,g) => s + g.matches.filter(m=>m.result!==null).length, 0);
+  const pct = tot ? Math.round(dn/tot*100) : 0;
+  document.getElementById('group-progress-bar').style.width = pct + '%';
+  document.getElementById('group-progress-text').textContent = `${dn}/${tot} партий (${pct}%)`;
+}
+
+// ===== PLAYOFF =====
+function advanceToPlayoff() {
+  const t = T[activeCategory];
+  if (t.groups.some(g => g.matches.some(m => m.result === null))) return notify('Сначала завершите все матчи в группах!');
+  
+  let winners =[];
+  if (t.groups.length === 1) {
+    const s = getGroupStandings(activeCategory, t.groups[0]);
+    winners = [s[0].id, s[1].id].filter(x => x !== undefined);
+  } else {
+    winners = t.groups.map(g => getGroupStandings(activeCategory, g)[0].id);
+  }
+
+  if (winners.length < 2) return notify('Недостаточно игроков для плей-офф!');
+
+  t.isPlayoff = true; t.bracket =[];
+  
+  // Power of 2 padding
+  let size = 1; while (size < winners.length) size *= 2;
+  const firstRound =[];
+  // Pad with nulls for BYEs
+  const paddedWinners =[...winners];
+  while (paddedWinners.length < size) paddedWinners.push(null);
+  
+  for (let i = 0; i < size; i += 2) {
+    firstRound.push({ p1: paddedWinners[i], p2: paddedWinners[i+1], winner: null });
+  }
+  t.bracket.push(firstRound);
+
+  let curSize = firstRound.length;
+  while (curSize > 1) {
+    curSize /= 2;
+    const round =[];
+    for (let i = 0; i < curSize; i++) round.push({ p1: null, p2: null, winner: null });
+    t.bracket.push(round);
+  }
+
+  t.thirdPlace = { p1: null, p2: null, winner: null };
+  switchTab('playoff');
+  notify('Сетка плей-офф сформирована!');
+}
+
+function renderPlayoff() {
+  const t = T[activeCategory];
+  const container = document.getElementById('bracket-container'); container.innerHTML = '';
+  const tpSection = document.getElementById('third-place-section'); tpSection.innerHTML = '';
+  const champDiv = document.getElementById('champion-display-playoff'); 
+  if (champDiv) champDiv.innerHTML = '';
+
+  if (!t || !t.isPlayoff) { container.innerHTML = '<div class="info-box">Плей-офф еще не сформирован.</div>'; return; }
+
+  const roundNames = [];
+  const base =['Финал', 'Полуфинал', '¼ финала', '⅛ финала'];
+  for (let i = 0; i < t.bracket.length; i++) roundNames.unshift(base[i] || `Раунд ${i+1}`);
+
+  t.bracket.forEach((round, ri) => {
+    const rDiv = document.createElement('div'); rDiv.className = 'bracket-round';
+    rDiv.innerHTML = `<div class="round-header">${roundNames[ri]}</div>`;
+    const mDiv = document.createElement('div'); mDiv.className = 'round-matches';
+
+    const isFinalRound = ri === t.bracket.length - 1;
+
+    round.forEach((m, mi) => {
+      // Auto-advance BYEs
+      if ((m.p1 === null) !== (m.p2 === null) && m.winner === null) {
+        setTimeout(() => setPlayoffWinner(ri, mi, m.p1 !== null ? 'p1' : 'p2'), 0);
+      }
+
+      const mEl = document.createElement('div'); 
+      mEl.className = `bracket-match ${isFinalRound ? 'no-after' : ''}`;
+      
+      const cWin = activeCategory === 'female' ? 'color:var(--female2); background:var(--female-dim)' : 'color:var(--gold2); background:var(--gold-dim)';
+      const checkIcon = `<span style="margin-left:auto; font-size:12px;">✓</span>`;
+      
+      const p1Click = m.p1 !== null && m.p2 !== null ? `onclick="setPlayoffWinner(${ri},${mi},'p1')"` : '';
+      const p2Click = m.p1 !== null && m.p2 !== null ? `onclick="setPlayoffWinner(${ri},${mi},'p2')"` : '';
+
+      mEl.innerHTML = `
+        <div class="bracket-player ${m.winner===m.p1&&m.p1!==null?'winner':''} ${m.winner!==null&&m.winner!==m.p1&&m.p1!==null?'loser':''}" ${p1Click} style="${m.winner===m.p1&&m.p1!==null?cWin:''}">
+          <span>${m.p1 !== null ? t.players[m.p1].name : '—'}</span>
+          ${m.winner===m.p1&&m.p1!==null ? checkIcon : ''}
+        </div>
+        <div class="bracket-player ${m.winner===m.p2&&m.p2!==null?'winner':''} ${m.winner!==null&&m.winner!==m.p2&&m.p2!==null?'loser':''}" ${p2Click} style="${m.winner===m.p2&&m.p2!==null?cWin:''}">
+          <span>${m.p2 !== null ? t.players[m.p2].name : '—'}</span>
+          ${m.winner===m.p2&&m.p2!==null ? checkIcon : ''}
+        </div>`;
+      mDiv.appendChild(mEl);
+    });
+    rDiv.appendChild(mDiv); container.appendChild(rDiv);
+    
+    if (!isFinalRound) {
+      const conn = document.createElement('div'); conn.style.cssText = 'width:32px; display:flex; flex-direction:column; padding:42px 0;';
+      container.appendChild(conn);
+    }
+  });
+
+  // Третье место
+  if (t.bracket.length >= 2) {
+    const semi = t.bracket[t.bracket.length - 2];
+    const losers = semi.map(m => m.winner === null ? null : (m.winner === m.p1 ? m.p2 : m.p1)).filter(l => l !== null);
+    if (losers.length >= 2) {
+      t.thirdPlace.p1 = losers[0]; t.thirdPlace.p2 = losers[1];
+      const tp = t.thirdPlace;
+      const cWin = activeCategory === 'female' ? 'color:var(--female2); background:var(--female-dim)' : 'color:var(--gold2); background:var(--gold-dim)';
+      const checkIcon = `<span style="margin-left:auto; font-size:12px;">✓</span>`;
+      
+      tpSection.innerHTML = `
+        <div class="card" style="max-width:360px; margin-top:20px">
+          <div class="card-title">🥉 Матч за 3-е место</div>
+          <div class="bracket-match no-after" style="max-width:240px; margin:0;">
+            <div class="bracket-player ${tp.winner===tp.p1?'winner':''} ${tp.winner!==null&&tp.winner!==tp.p1?'loser':''}" onclick="setThirdPlace('p1')" style="${tp.winner===tp.p1?cWin:''}">
+              <span>${t.players[tp.p1].name}</span>
+              ${tp.winner===tp.p1 ? checkIcon : ''}
+            </div>
+            <div class="bracket-player ${tp.winner===tp.p2?'winner':''} ${tp.winner!==null&&tp.winner!==tp.p2?'loser':''}" onclick="setThirdPlace('p2')" style="${tp.winner===tp.p2?cWin:''}">
+              <span>${t.players[tp.p2].name}</span>
+              ${tp.winner===tp.p2 ? checkIcon : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+  }
+
+  // Баннер Чемпиона
+  const finalMatch = t.bracket[t.bracket.length - 1]?.[0];
+  if (champDiv && finalMatch && finalMatch.winner !== null) {
+      const champName = t.players[finalMatch.winner].name;
+      const isFemale = activeCategory === 'female';
+      
+      champDiv.innerHTML = `
+        <div style="background:linear-gradient(135deg, ${isFemale ? 'var(--female-dim)' : 'var(--gold-dim)'}, transparent); border: 1px solid ${isFemale ? 'var(--female)' : 'var(--gold)'}; border-radius: 4px; padding: 24px; text-align: center; margin-bottom: 24px; animation: fadeInChamp 0.6s ease;">
+          <div style="font-size:48px; margin-bottom:8px;">🏆</div>
+          <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted2); margin-bottom:6px;">Победитель плей-офф</div>
+          <div style="font-family:'Playfair Display', serif; font-size:32px; color:${isFemale ? 'var(--female2)' : 'var(--gold2)'}; font-weight:bold; margin-bottom: 20px;">${champName}</div>
+          <button class="btn ${isFemale ? 'btn-female' : 'btn-gold'}" onclick="switchTab('results')">Перейти к итогам и пьедесталу →</button>
+        </div>
+      `;
+  }
+}
+
+function setPlayoffWinner(ri, mi, side) {
+  const t = T[activeCategory]; const m = t.bracket[ri][mi];
+  const wId = side === 'p1' ? m.p1 : m.p2;
+  m.winner = wId;
+  if (ri + 1 < t.bracket.length) {
+    const nm = t.bracket[ri + 1][Math.floor(mi / 2)];
+    if (mi % 2 === 0) nm.p1 = wId; else nm.p2 = wId;
+    nm.winner = null;
+  }
+  renderPlayoff();
+}
+function setThirdPlace(side) { const tp = T[activeCategory].thirdPlace; tp.winner = side === 'p1' ? tp.p1 : tp.p2; renderPlayoff(); }
+
+// ===== FINAL RANKING & RESULTS =====
+function getFinalRanking(cat) {
+  const t = T[cat]; if (!t) return [];
+  const ranked =[]; const pIds = new Set();
+  
+  if (t.isPlayoff) {
+    const fm = t.bracket[t.bracket.length - 1]?.[0];
+    const tp = t.thirdPlace;
+    if (fm && fm.winner !== null) {
+      const champ = fm.winner, runner = fm.winner === fm.p1 ? fm.p2 : fm.p1;
+      ranked.push({ id: champ, rank: 1 }); if (runner !== null) ranked.push({ id: runner, rank: 2 });
+      pIds.add(champ); pIds.add(runner);
+    }
+    if (tp && tp.winner !== null) {
+      const third = tp.winner, fourth = tp.winner === tp.p1 ? tp.p2 : tp.p1;
+      ranked.push({ id: third, rank: 3 }); if (fourth !== null) ranked.push({ id: fourth, rank: 4 });
+      pIds.add(third); pIds.add(fourth);
+    }
+  }
+
+  let groupPlayers =[];
+  t.groups.forEach(g => {
+    getGroupStandings(cat, g).forEach((s, i) => groupPlayers.push({ id: s.id, gPos: i, pts: s.points, b: s.buchholz }));
+  });
+
+  groupPlayers = groupPlayers.filter(p => !pIds.has(p.id));
+  groupPlayers.sort((a, b) => {
+    if (a.gPos !== b.gPos) return a.gPos - b.gPos;
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    return b.b - a.b;
+  });
+
+  let curR = ranked.length > 0 ? Math.max(...ranked.map(r=>r.rank)) + 1 : 1;
+  groupPlayers.forEach(p => ranked.push({ id: p.id, rank: curR++, ...p }));
+  
+  return ranked;
+}
+
+function renderResults() {
+  document.getElementById('tourney-name-display').textContent = T.name;
+  const t = T[activeCategory];
+  const s = document.getElementById('results-content'); s.innerHTML = '';
+  if (!t) return;
+
+  const ranks = getFinalRanking(activeCategory);
+  if (ranks.length === 0) { s.innerHTML = '<div class="info-box">Турнир еще не начался или нет результатов.</div>'; return; }
+
+  const p1 = ranks.find(r => r.rank === 1);
+  const p2 = ranks.find(r => r.rank === 2);
+  const p3 = ranks.find(r => r.rank === 3);
+
+  // Podium (Top 3)
+  if (p1 || p2 || p3) {
+    const pw = document.createElement('div'); pw.className = 'podium-wrapper';
+    
+    // 2nd Place
+    if (p2) pw.innerHTML += `
+      <div class="podium-item podium-2">
+        <div class="podium-name">${t.players[p2.id].name}</div>
+        <div class="podium-base"><div class="podium-medal">🥈</div><div class="podium-rank">2</div></div>
+      </div>`;
+      
+    // 1st Place
+    if (p1) {
+      const cName = activeCategory === 'female' ? 'var(--female2)' : 'var(--gold2)';
+      const cGrad = activeCategory === 'female' ? 'rgba(162,91,194,0.15)' : 'rgba(201,168,76,0.15)';
+      const cBord = activeCategory === 'female' ? 'rgba(162,91,194,0.4)' : 'rgba(201,168,76,0.4)';
+      pw.innerHTML += `
+        <div class="podium-item podium-1">
+          <div class="podium-name" style="color:${cName}">${t.players[p1.id].name}</div>
+          <div class="podium-base" style="background:linear-gradient(to bottom, ${cGrad}, var(--surface)); border-color:${cBord};">
+            <div class="podium-medal">🥇</div><div class="podium-rank" style="color:${cName}">1</div>
+          </div>
+        </div>`;
+    }
+
+    // 3rd Place
+    if (p3) pw.innerHTML += `
+      <div class="podium-item podium-3">
+        <div class="podium-name">${t.players[p3.id].name}</div>
+        <div class="podium-base"><div class="podium-medal">🥉</div><div class="podium-rank">3</div></div>
+      </div>`;
+      
+    s.appendChild(pw);
+  } else if (!t.isPlayoff) {
+    s.innerHTML = '<div class="info-box">Сыграйте групповую стадию и плей-офф, чтобы определить призеров. Ниже представлены текущие места на основе групп.</div>';
+  }
+
+  // Grid for the rest (4+)
+  const rest = ranks.filter(r => r.rank >= 4);
+  if (rest.length > 0) {
+    const grid = document.createElement('div'); grid.className = 'results-grid';
+    rest.forEach(r => {
+      let statsText = '';
+      if (r.pts !== undefined) statsText = `Группа: ${r.gPos+1} место | Очки: ${r.pts} | Бухгольц: ${r.b}`;
+      grid.innerHTML += `
+        <div class="result-card">
+          <div class="result-place">${r.rank}</div>
+          <div class="result-details">
+            <div class="result-name">${t.players[r.id].name}</div>
+            <div class="result-stats">${statsText}</div>
+          </div>
+        </div>`;
+    });
+    s.appendChild(grid);
+  }
+}
+
+// ===== UTILS =====
+function notify(m) { const n = document.getElementById('notification'); n.textContent = m; n.classList.add('show'); setTimeout(() => n.classList.remove('show'), 3000); }
+function printTournament() { window.print(); }
+function resetTournament() { if(confirm('Сбросить все данные?')) location.reload(); }
 </script>
 </body>
 </html>
